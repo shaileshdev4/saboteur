@@ -1,0 +1,9 @@
+# Full dev/test requirements. For backend-only deploy, see backend/requirements.txt.
+sympy>=1.14
+fastapi>=0.110
+python-multipart>=0.0.9
+uvicorn[standard]>=0.27
+pydantic>=2.6
+httpx>=0.27
+slowapi>=0.1.9
+reportlab>=4.0     # one-pager PDF build

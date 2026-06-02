@@ -1,0 +1,2 @@
+# Monorepo: ignore rules are in the repo root .gitignore (../.gitignore).
+# This file exists so opening only frontend/ in an IDE still shows the note.

@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: saboteur-backend
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    rootDir: .
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12"
+      - key: SABOTEUR_DB_PATH
+        value: /var/data/saboteur.sqlite3
+      - key: LLM_CACHE_PATH
+        value: /var/data/llm_cache.json
+      - key: LLM_API_KEY
+        sync: false   # set via Render dashboard secret
+      - key: LLM_API_BASE
+        value: https://api.llmapi.ai/v1
+      - key: LLM_API_MODEL
+        value: gpt-4o-mini
+    disk:
+      name: saboteur-data
+      mountPath: /var/data
+      sizeGB: 1

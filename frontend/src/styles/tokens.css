@@ -1,0 +1,46 @@
+/**
+ * Design tokens — Theme A (Cyber Audit)
+ */
+:root {
+  --color-bg: #0f1014;
+  --color-surface: #1a1c22;
+  --color-surface-elevated: #262a32;
+  --color-line: #3a3d48;
+  --color-line-subtle: #4a4e5c;
+
+  --color-text: #eeeef1;
+  --color-text-muted: #a8aab4;
+  --color-text-faint: #6e717c;
+
+  --color-accent: #7c5cff;
+  --color-accent-soft: #a193ff;
+  --color-accent-muted: #2a2442;
+  --color-accent-fg: #ddd4ff;
+
+  --color-good: #2ec27e;
+  --color-good-muted: #152a22;
+  --color-good-fg: #6ee7a8;
+
+  --color-warn: #e5a52b;
+  --color-warn-muted: #2a2418;
+  --color-warn-fg: #f5cc5c;
+
+  --color-bad: #e5484d;
+  --color-bad-muted: #2a1819;
+  --color-bad-fg: #f08085;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-glow: 0 0 40px rgba(124, 92, 255, 0.15);
+  --font-sans: 'Sora', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}

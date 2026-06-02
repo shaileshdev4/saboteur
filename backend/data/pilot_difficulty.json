@@ -1,0 +1,9 @@
+{
+  "cancellation_across_sum": 1,
+  "incorrect_factoring": 1,
+  "off_by_one_constant": 1,
+  "operation_one_side_only": 1,
+  "qf_sign_error": 1,
+  "sign_flip_transpose": 1,
+  "wrong_root_in_factoring": 1
+}

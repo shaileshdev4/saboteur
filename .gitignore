@@ -1,0 +1,66 @@
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+backend/.pytest_cache/
+
+# Python envs (local only — never commit)
+.venv/
+backend/venv/
+backend/.venv/
+
+# Legacy / accidental
+saboteur-v4/
+saboteur-v4.zip
+backend/engine/
+[{]engine,engine/
+
+# --- Frontend (Vite / React) — monorepo: all rules live here ---
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.eslintcache
+
+# Local env overrides (never commit secrets)
+.env
+.env.local
+.env.*.local
+# Committed templates: frontend/.env.example, .env.development, .env.production
+
+# Runtime DB & caches (local + Render disk — not in git)
+*.sqlite3
+*.sqlite3-journal
+*.db
+llm_cache.json
+saboteur.sqlite3
+
+# Secrets & demo credentials
+docs/demo_credentials.txt
+
+# Dev-only logs
+backend/cli/logs/
+cli/logs/
+
+# OS / editors
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
+*.swp
+
+# --- Internal dev docs (not product runtime) ---
+docs/PHASE0.md
+docs/UI_SMOKE.md
+docs/demo_script.md
+docs/build_pdf.py
+backend/docs/
+
+# Uncomment to keep PDF Devpost-only (not in git):
+# docs/one_pager.pdf
