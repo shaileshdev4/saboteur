@@ -28,7 +28,7 @@ export const env = {
   apiBase,
 
   /** Dev-only: Vite proxy target (not sent to browser). Documented in .env.example. */
-  proxyTarget: import.meta.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8000',
+  proxyTarget: import.meta.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:8001',
 
   devServerPort: Number(import.meta.env.VITE_DEV_SERVER_PORT) || 5173,
 

@@ -7,9 +7,7 @@ import Chip from './ui/Chip.jsx';
 import Textarea from './ui/Textarea.jsx';
 import { Camera, StatusIcon } from './ui/StatusIcon.jsx';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  (import.meta.env.DEV ? '/api' : 'http://localhost:8765');
+import { api, getErrorMessage } from '../api.js';
 
 function LaTeXBlock({ tex, displayMode = false }) {
   const ref = useRef(null);
@@ -66,9 +64,8 @@ export default function UniversalAuditor() {
   const fileInputRef = useRef(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/image/configured`)
-      .then((r) => r.json())
-      .then((d) => setImageEnabled(d.configured))
+    api.imageConfigured()
+      .then((d) => setImageEnabled(!!d.configured))
       .catch(() => setImageEnabled(false));
   }, []);
 
@@ -81,21 +78,13 @@ export default function UniversalAuditor() {
     }
     try {
       setLoading(true);
-      const resp = await fetch(`${API_BASE}/audit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          blob,
-          domain_id: forceDomain || null,
-        }),
+      const r = await api.audit({
+        blob,
+        domain_id: forceDomain || null,
       });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error(`HTTP ${resp.status}: ${t}`);
-      }
-      setResult(await resp.json());
+      setResult(r);
     } catch (e) {
-      setError(e.message || String(e));
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -107,24 +96,14 @@ export default function UniversalAuditor() {
     setError('');
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const resp = await fetch(`${API_BASE}/image/transcribe`, {
-        method: 'POST',
-        body: formData,
-      });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error(`HTTP ${resp.status}: ${t}`);
-      }
-      const data = await resp.json();
+      const data = await api.imageTranscribe(file);
       if (!data.ok) {
         setError(data.error || 'Transcription failed.');
         return;
       }
       setBlob(data.text);
     } catch (e) {
-      setError(e.message || String(e));
+      setError(getErrorMessage(e));
     } finally {
       setUploading(false);
       e.target.value = '';

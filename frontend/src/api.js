@@ -1,37 +1,60 @@
 // Single point of contact with the backend.
-// VITE_API_BASE in prod; Vite proxies /api/* in dev.
+import { env } from './config/env.js';
+import {
+  ApiError,
+  getErrorMessage,
+  httpApiError,
+  networkApiError,
+} from './utils/apiErrors.js';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  (import.meta.env.DEV ? '/api' : 'http://localhost:8765');
+export { getErrorMessage, ApiError };
 
-async function request(path, options = {}) {
-  const resp = await fetch(`${API_BASE}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
-    ...options,
-  });
+const API_BASE = env.apiBase || (import.meta.env.DEV ? '/api' : '');
+
+export async function request(path, options = {}) {
+  const { parseJson = true, ...fetchOptions } = options;
+  const headers = { ...(fetchOptions.headers || {}) };
+  if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
+    headers['Content-Type'] = headers['Content-Type'] || 'application/json';
+  }
+
+  let resp;
+  try {
+    resp = await fetch(`${API_BASE}${path}`, {
+      ...fetchOptions,
+      headers,
+    });
+  } catch (cause) {
+    throw networkApiError(cause);
+  }
+
   if (!resp.ok) {
     let body = '';
-    try { body = await resp.text(); } catch {}
-    const err = new Error(`HTTP ${resp.status}: ${body}`);
-    err.status = resp.status;
-    throw err;
+    try {
+      body = await resp.text();
+    } catch {
+      /* ignore */
+    }
+    throw httpApiError(resp.status, body);
   }
-  return resp.json();
+
+  if (!parseJson) return resp;
+  try {
+    return await resp.json();
+  } catch (cause) {
+    throw new ApiError('parse', 'Invalid response from server.', { cause });
+  }
 }
 
 export const api = {
   health: () => request('/health'),
 
-  // Sessions
   createSession: () => request('/session', { method: 'POST' }),
   dashboard: (sid) => request(`/session/${sid}/dashboard`),
 
-  // Domains
   domains: () => request('/domains'),
   domainMisconceptions: (did) => request(`/domains/${did}/misconceptions`),
 
-  // Rounds
   newRound: (sid, { domainId, difficulty, problemType, corruptProb = 0.5, propagate = false } = {}) => {
     const params = new URLSearchParams();
     if (domainId) params.set('domain_id', domainId);
@@ -42,28 +65,80 @@ export const api = {
     return request(`/session/${sid}/round?${params.toString()}`);
   },
 
-  // Grade
   grade: (payload) =>
     request('/grade', { method: 'POST', body: JSON.stringify(payload) }),
 
-  // Hints (new in V2)
   hint: (sid, rid, tier) =>
     request('/hint', {
       method: 'POST',
       body: JSON.stringify({ session_id: sid, round_id: rid, tier }),
     }),
 
-  // Misconceptions (all domains combined)
   misconceptions: () => request('/misconceptions'),
 
-  // BYOAI
   byoai: (problem, steps) =>
     request('/byoai', {
       method: 'POST',
       body: JSON.stringify({ problem, steps }),
     }),
 
-  // V5: Leaderboards & achievements
+  audit: ({ blob, domain_id = null, problem_override = null }) =>
+    request('/audit', {
+      method: 'POST',
+      body: JSON.stringify({ blob, domain_id, problem_override }),
+    }),
+
+  imageConfigured: () => request('/image/configured'),
+
+  imageTranscribe: async (file, hint) => {
+    const form = new FormData();
+    form.append('file', file);
+    const q = hint ? `?hint=${encodeURIComponent(hint)}` : '';
+    return request(`/image/transcribe${q}`, { method: 'POST', body: form });
+  },
+
+  classBySession: (sessionId) => request(`/class/by-session/${sessionId}`),
+
+  classJoin: (payload) =>
+    request('/class/join', { method: 'POST', body: JSON.stringify(payload) }),
+
+  classDashboard: (teacherToken) =>
+    request('/class/dashboard', {
+      headers: { 'X-Teacher-Token': teacherToken },
+    }),
+
+  classCreate: (payload) =>
+    request('/class', { method: 'POST', body: JSON.stringify(payload) }),
+
+  matchGet: (matchId) => request(`/match/${matchId}`),
+
+  matchCreate: (payload) =>
+    request('/match', { method: 'POST', body: JSON.stringify(payload) }),
+
+  matchJoin: (payload) =>
+    request('/match/join', { method: 'POST', body: JSON.stringify(payload) }),
+
+  matchStart: (matchId, payload) =>
+    request(`/match/${matchId}/start`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  matchNextRound: (matchId, payload) =>
+    request(`/match/${matchId}/next-round`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  matchSubmit: (matchId, payload) =>
+    request(`/match/${matchId}/submit`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+
+  roundPublic: (roundId, sessionId) =>
+    request(`/round/${roundId}/public?session_id=${encodeURIComponent(sessionId)}`),
+
   leaderboard: ({ period = 'all_time', domainId, classId, limit = 50 } = {}) => {
     const params = new URLSearchParams({ period, limit: String(limit) });
     if (domainId) params.set('domain_id', domainId);
@@ -82,18 +157,16 @@ export const api = {
   achievements: (sessionId) => request(`/session/${sessionId}/achievements`),
 };
 
-// LocalStorage session persistence
 const SESSION_KEY = 'saboteur:session_id';
 
 export async function getOrCreateSession() {
   const stored = localStorage.getItem(SESSION_KEY);
   if (stored) {
     try {
-      // Verify by hitting the dashboard endpoint.
       await api.dashboard(stored);
       return stored;
     } catch (e) {
-      // Session no longer exists on backend; fall through to create a new one.
+      if (e instanceof ApiError && e.kind === 'network') throw e;
       localStorage.removeItem(SESSION_KEY);
     }
   }

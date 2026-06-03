@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import katex from 'katex';
-import { api } from '../api.js';
+import { api, getErrorMessage } from '../api.js';
 import { StatusIcon } from './ui/StatusIcon.jsx';
 
 function LaTeXBlock({ tex, displayMode = false }) {
@@ -61,7 +61,7 @@ export default function ByoaiMode() {
       const r = await api.byoai(problem, steps);
       setResult(r);
     } catch (e) {
-      setError(String(e.message || e));
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }

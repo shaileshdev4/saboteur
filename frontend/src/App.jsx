@@ -1,5 +1,5 @@
-import React, { Suspense, lazy, useEffect, useState } from 'react';
-import { api, getOrCreateSession, clearSession } from './api.js';
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import { api, getOrCreateSession, clearSession, getErrorMessage } from './api.js';
 import PlayScreen from './components/PlayScreen.jsx';
 import RevealScreen from './components/RevealScreen.jsx';
 import UniversalAuditor from './components/UniversalAuditor.jsx';
@@ -11,6 +11,8 @@ import Leaderboard from './components/Leaderboard.jsx';
 import AchievementToast from './components/AchievementToast.jsx';
 import Button from './components/ui/Button.jsx';
 import BrandMark from './components/ui/BrandMark.jsx';
+import ErrorBanner from './components/ui/ErrorBanner.jsx';
+import ConnectionProblem from './components/ui/ConnectionProblem.jsx';
 import { recordRoundOutcome } from './utils/sessionAnalytics.js';
 
 const Dashboard = lazy(() => import('./components/Dashboard.jsx'));
@@ -42,34 +44,39 @@ export default function App() {
   const [loadingRound, setLoadingRound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [bootstrapped, setBootstrapped] = useState(false);
+  const [bootRetrying, setBootRetrying] = useState(false);
   const [bannerError, setBannerError] = useState('');
+  const [dashboardLoading, setDashboardLoading] = useState(false);
   const [roundNumber, setRoundNumber] = useState(0);
   const [toastQueue, setToastQueue] = useState([]);
   const [allAchievements, setAllAchievements] = useState([]);
 
-  useEffect(() => {
-    const init = async () => {
-      try {
-        const [sid, doms] = await Promise.all([
-          getOrCreateSession(),
-          api.domains(),
-        ]);
-        setSessionId(sid);
-        setDomains(doms);
-        if (!doms.find((d) => d.id === activeDomain)) {
-          setActiveDomain(doms[0]?.id || 'algebra');
-        }
-      } catch (e) {
-        setBannerError(
-          'Cannot reach the backend. From saboteur/backend run: uvicorn main:app --reload --host 127.0.0.1 --port 8001'
-        );
-      } finally {
-        setBootstrapped(true);
-      }
-    };
-    init();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  const bootstrap = useCallback(async () => {
+    setBootRetrying(true);
+    setBannerError('');
+    try {
+      const [sid, doms] = await Promise.all([
+        getOrCreateSession(),
+        api.domains(),
+      ]);
+      setSessionId(sid);
+      setDomains(doms);
+      setActiveDomain((current) =>
+        doms.find((d) => d.id === current) ? current : doms[0]?.id || 'algebra',
+      );
+    } catch (e) {
+      setSessionId(null);
+      setDomains([]);
+      setBannerError(getErrorMessage(e, { context: 'session' }));
+    } finally {
+      setBootstrapped(true);
+      setBootRetrying(false);
+    }
   }, []);
+
+  useEffect(() => {
+    bootstrap();
+  }, [bootstrap]);
 
   const setDomain = (did) => {
     setActiveDomain(did);
@@ -83,13 +90,15 @@ export default function App() {
     if (!sessionId) return;
     try {
       setLoadingRound(true);
+      setBannerError('');
       setGrade(null);
       setPhase('play');
       const r = await api.newRound(sessionId, { domainId: activeDomain });
       setRound(r);
       setRoundNumber((n) => n + 1);
     } catch (e) {
-      setBannerError(e.message || String(e));
+      setRound(null);
+      setBannerError(getErrorMessage(e));
     } finally {
       setLoadingRound(false);
     }
@@ -136,7 +145,7 @@ export default function App() {
       }
       setPhase('reveal');
     } catch (e) {
-      setBannerError(e.message || String(e));
+      setBannerError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }
@@ -144,26 +153,29 @@ export default function App() {
 
   const handleNext = () => fetchRound();
 
-  const goToDashboard = async () => {
+  const loadDashboard = async () => {
     if (!sessionId) return;
+    setDashboardLoading(true);
     try {
       const d = await api.dashboard(sessionId);
       setDashboardData(d);
-      setTab('dashboard');
     } catch (e) {
-      setBannerError(e.message || String(e));
+      setDashboardData(null);
+      setBannerError(getErrorMessage(e));
+    } finally {
+      setDashboardLoading(false);
     }
+  };
+
+  const goToDashboard = async () => {
+    setTab('dashboard');
+    await loadDashboard();
   };
 
   const switchTab = async (t) => {
     setTab(t);
     if (t === 'dashboard' && sessionId) {
-      try {
-        const d = await api.dashboard(sessionId);
-        setDashboardData(d);
-      } catch (e) {
-        setBannerError(e.message || String(e));
-      }
+      await loadDashboard();
     }
   };
 
@@ -213,26 +225,34 @@ export default function App() {
         </div>
       )}
 
-      {bannerError && (
-        <div className="panel-bad border-y border-bad/50 px-4 py-2 text-sm text-bad-foreground">
-          {bannerError}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setBannerError('')}
-            className="ml-2 underline !px-1 !py-0 min-h-0"
-          >
-            dismiss
-          </Button>
-        </div>
-      )}
+      <ErrorBanner
+        message={bannerError}
+        onDismiss={() => setBannerError('')}
+        onRetry={!sessionId ? bootstrap : undefined}
+        retryLabel={bootRetrying ? 'Connecting…' : 'Retry'}
+        retrying={bootRetrying}
+      />
 
       <main className="flex-1">
         {!bootstrapped && <Booting />}
 
-        {bootstrapped && tab === 'play' && phase === 'play' && (
-          loadingRound || !round ? (
+        {bootstrapped && !sessionId && (
+          <ConnectionProblem
+            message={bannerError}
+            onRetry={bootstrap}
+            retrying={bootRetrying}
+          />
+        )}
+
+        {bootstrapped && sessionId && tab === 'play' && phase === 'play' && (
+          loadingRound ? (
             <div className="text-ink-400 py-16 text-center">Scanning pipeline…</div>
+          ) : !round ? (
+            <ConnectionProblem
+              message={bannerError || "Couldn't load a round."}
+              onRetry={fetchRound}
+              retrying={loadingRound}
+            />
           ) : (
             <PlayScreen
               round={round}
@@ -245,7 +265,7 @@ export default function App() {
           )
         )}
 
-        {bootstrapped && tab === 'play' && phase === 'reveal' && (
+        {bootstrapped && sessionId && tab === 'play' && phase === 'reveal' && (
           <RevealScreen
             round={round}
             grade={grade}
@@ -254,15 +274,15 @@ export default function App() {
           />
         )}
 
-        {bootstrapped && tab === 'multiplayer' && (
+        {bootstrapped && sessionId && tab === 'multiplayer' && (
           <MultiplayerMode sessionId={sessionId} />
         )}
 
-        {bootstrapped && tab === 'leaderboard' && (
+        {bootstrapped && sessionId && tab === 'leaderboard' && (
           <Leaderboard sessionId={sessionId} domains={domains} />
         )}
 
-        {bootstrapped && tab === 'dashboard' && (
+        {bootstrapped && sessionId && tab === 'dashboard' && (
           <Suspense
             fallback={
               <div className="text-ink-400 py-10 text-center">Loading stats…</div>
@@ -270,7 +290,8 @@ export default function App() {
           >
             <Dashboard
               data={dashboardData}
-              loading={!dashboardData}
+              loading={dashboardLoading}
+              loadError={!dashboardLoading && !dashboardData ? bannerError : ''}
               onPlay={() => switchTab('play')}
               domains={domains}
               sessionId={sessionId}
@@ -279,9 +300,9 @@ export default function App() {
           </Suspense>
         )}
 
-        {bootstrapped && tab === 'audit' && <UniversalAuditor />}
+        {bootstrapped && sessionId && tab === 'audit' && <UniversalAuditor />}
 
-        {bootstrapped && tab === 'classroom' && (
+        {bootstrapped && sessionId && tab === 'classroom' && (
           <ClassroomMode sessionId={sessionId} />
         )}
       </main>

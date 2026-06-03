@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lightbulb } from 'lucide-react';
-import { api } from '../api.js';
+import { api, getErrorMessage } from '../api.js';
 import Button from './ui/Button.jsx';
 import Card from './ui/Card.jsx';
 import Chip from './ui/Chip.jsx';
@@ -39,7 +39,7 @@ export default function HintButton({
       setHints(updated);
       if (onHintUsed) onHintUsed(updated);
     } catch (e) {
-      setError(e.message || 'Failed to fetch hint');
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }

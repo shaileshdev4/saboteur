@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { Trophy } from 'lucide-react';
-import { api } from '../api.js';
+import { api, getErrorMessage } from '../api.js';
 import Button from './ui/Button.jsx';
 import Card from './ui/Card.jsx';
 import Chip from './ui/Chip.jsx';
@@ -35,7 +35,7 @@ export default function Leaderboard({ sessionId, domains = [] }) {
       });
       setEntries(data.entries || []);
     } catch (e) {
-      setError(e.message || String(e));
+      setError(getErrorMessage(e));
       setEntries([]);
     } finally {
       setLoading(false);
@@ -64,7 +64,7 @@ export default function Leaderboard({ sessionId, domains = [] }) {
       setModalOpen(false);
       loadBoard();
     } catch (e) {
-      setError(e.message || String(e));
+      setError(getErrorMessage(e));
     } finally {
       setSaving(false);
     }

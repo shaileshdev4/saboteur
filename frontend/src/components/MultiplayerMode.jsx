@@ -7,9 +7,7 @@ import Card from './ui/Card.jsx';
 import Chip from './ui/Chip.jsx';
 import { Check, ChevronRight } from './ui/StatusIcon.jsx';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  (import.meta.env.DEV ? '/api' : 'http://localhost:8765');
+import { api, getErrorMessage } from '../api.js';
 
 function LaTeXBlock({ tex, displayMode = false }) {
   const ref = useRef(null);
@@ -44,9 +42,7 @@ export default function MultiplayerMode({ sessionId }) {
     //   - in_progress with both not answered: race underway
     const interval = setInterval(async () => {
       try {
-        const resp = await fetch(`${API_BASE}/match/${match.match_id}`);
-        if (!resp.ok) return;
-        const m = await resp.json();
+        const m = await api.matchGet(match.match_id);
         setMatch(m);
         if (m.state === 'in_progress' && view === 'lobby') {
           setView('playing');
@@ -87,17 +83,14 @@ export default function MultiplayerMode({ sessionId }) {
     setError('');
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/match`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId, nickname: nickname.trim() }),
+      const m = await api.matchCreate({
+        session_id: sessionId,
+        nickname: nickname.trim(),
       });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const m = await resp.json();
       setMatch(m);
       setView('lobby');
     } catch (e) {
-      setError(e.message);
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -111,24 +104,15 @@ export default function MultiplayerMode({ sessionId }) {
     setError('');
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/match/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          nickname: nickname.trim(),
-          join_code: joinCode.trim().toUpperCase(),
-        }),
+      const m = await api.matchJoin({
+        session_id: sessionId,
+        nickname: nickname.trim(),
+        join_code: joinCode.trim().toUpperCase(),
       });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error(`HTTP ${resp.status}: ${t}`);
-      }
-      const m = await resp.json();
       setMatch(m);
       setView('lobby');
     } catch (e) {
-      setError(e.message);
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -138,21 +122,11 @@ export default function MultiplayerMode({ sessionId }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetch(`${API_BASE}/match/${match.match_id}/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error(`HTTP ${resp.status}: ${t}`);
-      }
-      const m = await resp.json();
+      const m = await api.matchStart(match.match_id, { session_id: sessionId });
       setMatch(m);
-      // Immediately request the first round.
       await nextRound();
     } catch (e) {
-      setError(e.message);
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -160,19 +134,21 @@ export default function MultiplayerMode({ sessionId }) {
 
   const nextRound = async () => {
     try {
-      const resp = await fetch(`${API_BASE}/match/${match.match_id}/next-round`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ session_id: sessionId }),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const m = await resp.json();
+      const m = await api.matchNextRound(match.match_id, { session_id: sessionId });
       setMatch(m);
       setView('playing');
     } catch (e) {
-      setError(e.message);
+      setError(getErrorMessage(e));
     }
   };
+
+  if (!sessionId) {
+    return (
+      <div className="layout-shell py-8 text-center text-sm text-ink-400">
+        Connect to the API from the Play tab first (or use Retry in the banner).
+      </div>
+    );
+  }
 
   if (view === 'hub') {
     return (
@@ -366,13 +342,9 @@ function PlayingView({ match, sessionId, onNextRound }) {
     }
     setLoadingRound(true);
     setFlaggedIndex(null);
-    fetch(`${API_BASE}/round/${match.current_round_id}/public?session_id=${sessionId}`)
-      .then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
+    api.roundPublic(match.current_round_id, sessionId)
       .then((r) => setRound(r))
-      .catch((e) => setError(`Couldn't load round: ${e.message}`))
+      .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingRound(false));
   }, [match.current_round_id, sessionId]);
 
@@ -393,14 +365,9 @@ function PlayingView({ match, sessionId, onNextRound }) {
         }
         body.flagged_step_index = flaggedIndex;
       }
-      const resp = await fetch(`${API_BASE}/match/${match.match_id}/submit`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      await api.matchSubmit(match.match_id, body);
     } catch (e) {
-      setError(e.message);
+      setError(getErrorMessage(e));
     } finally {
       setSubmitting(false);
     }

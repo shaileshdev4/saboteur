@@ -89,6 +89,7 @@ function computeInsights(data, domains, sessionId) {
 export default function Dashboard({
   data,
   loading,
+  loadError = '',
   onPlay,
   domains,
   sessionId,
@@ -101,6 +102,14 @@ export default function Dashboard({
 
   if (loading) {
     return <div className="text-ink-400 py-10 text-center">Loading calibration…</div>;
+  }
+  if (loadError) {
+    return (
+      <div className="text-center py-12 px-4 max-w-md mx-auto">
+        <p className="text-sm text-bad-foreground leading-relaxed">{loadError}</p>
+        <p className="text-xs text-ink-500 mt-2">Use Retry in the banner above or play a round first.</p>
+      </div>
+    );
   }
   if (!data || !insights) {
     return (

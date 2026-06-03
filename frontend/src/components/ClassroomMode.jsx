@@ -5,9 +5,7 @@ import Card from './ui/Card.jsx';
 import Input from './ui/Input.jsx';
 import Chip from './ui/Chip.jsx';
 
-const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  (import.meta.env.DEV ? '/api' : 'http://localhost:8765');
+import { api, getErrorMessage, ApiError } from '../api.js';
 
 const TEACHER_TOKEN_KEY = 'saboteur:teacher_token';
 
@@ -20,8 +18,7 @@ export default function ClassroomMode({ sessionId }) {
   // Check whether session is already in a class.
   useEffect(() => {
     if (!sessionId) return;
-    fetch(`${API_BASE}/class/by-session/${sessionId}`)
-      .then((r) => r.json())
+    api.classBySession(sessionId)
       .then((d) => {
         if (d) {
           setClassInfo(d);
@@ -30,6 +27,14 @@ export default function ClassroomMode({ sessionId }) {
       })
       .catch(() => {});
   }, [sessionId]);
+
+  if (!sessionId) {
+    return (
+      <div className="layout-shell py-8 text-center text-sm text-ink-400">
+        Start a session from the Play tab (or Retry in the banner) before using Classroom mode.
+      </div>
+    );
+  }
 
   return (
     <div className="layout-shell py-4 sm:py-6 space-y-6">
@@ -126,22 +131,14 @@ function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
     setError('');
     setLoading(true);
     try {
-      const resp = await fetch(`${API_BASE}/class/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          join_code: joinCode.trim().toUpperCase(),
-          session_id: sessionId,
-          nickname: nickname.trim(),
-        }),
+      const data = await api.classJoin({
+        join_code: joinCode.trim().toUpperCase(),
+        session_id: sessionId,
+        nickname: nickname.trim(),
       });
-      if (!resp.ok) {
-        const t = await resp.text();
-        throw new Error(`HTTP ${resp.status}: ${t}`);
-      }
-      onClassChange(await resp.json());
+      onClassChange(data);
     } catch (e) {
-      setError(e.message);
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
@@ -225,21 +222,15 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetch(`${API_BASE}/class/dashboard`, {
-        headers: { 'X-Teacher-Token': token },
-      });
-      if (!resp.ok) {
-        if (resp.status === 401) {
-          onTokenChange('');
-          setDashboard(null);
-          throw new Error('Saved teacher token is invalid. Create a new class.');
-        }
-        const t = await resp.text();
-        throw new Error(`HTTP ${resp.status}: ${t}`);
-      }
-      setDashboard(await resp.json());
+      setDashboard(await api.classDashboard(token));
     } catch (e) {
-      setError(e.message);
+      if (e instanceof ApiError && e.status === 401) {
+        onTokenChange('');
+        setDashboard(null);
+        setError('Saved teacher token is invalid. Create a new class.');
+      } else {
+        setError(getErrorMessage(e));
+      }
     } finally {
       setLoading(false);
     }
@@ -253,17 +244,11 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
     setLoading(true);
     setError('');
     try {
-      const resp = await fetch(`${API_BASE}/class`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim() }),
-      });
-      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-      const data = await resp.json();
+      const data = await api.classCreate({ name: name.trim() });
       setCreated(data);
       onTokenChange(data.teacher_token);
     } catch (e) {
-      setError(e.message);
+      setError(getErrorMessage(e));
     } finally {
       setLoading(false);
     }
