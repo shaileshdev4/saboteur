@@ -198,7 +198,7 @@
   );
 }
 
-.theme-scanlines > * {
+.theme-scanlines > *:not(.onboarding-overlay) {
   position: relative;
   z-index: 1;
 }

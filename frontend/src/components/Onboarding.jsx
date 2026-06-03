@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Button from './ui/Button.jsx';
 import Card from './ui/Card.jsx';
 import BrandMark from './ui/BrandMark.jsx';
@@ -58,14 +59,17 @@ export default function Onboarding({ onStartPractice }) {
   const card = STEPS[step];
   const isLast = step === STEPS.length - 1;
 
-  return (
+  const overlay = (
     <div
-      className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur px-4 theme-scanlines"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="onboarding-title"
+      className="onboarding-overlay fixed inset-0 z-[100] flex items-center justify-center bg-black/75 backdrop-blur-sm px-4 py-8"
       onClick={() => finish(false)}
     >
       <Card
         variant="elevated"
-        className="max-w-md w-full p-6 shadow-2xl step-in border-accent/20"
+        className="max-w-md w-full p-6 shadow-2xl step-in border-accent/20 mx-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 mb-4">
@@ -79,7 +83,9 @@ export default function Onboarding({ onStartPractice }) {
         <div className="mb-4 w-12 h-12 rounded-xl bg-accent/15 border border-accent/30 grid place-items-center">
           <OnboardingIcon name={card.icon} />
         </div>
-        <h3 className="text-xl font-semibold mb-2">{card.title}</h3>
+        <h3 id="onboarding-title" className="text-xl font-semibold mb-2">
+          {card.title}
+        </h3>
         <p className="text-sm text-ink-200 leading-relaxed">{card.body}</p>
 
         <div className="flex items-center gap-1.5 mt-5">
@@ -133,4 +139,6 @@ export default function Onboarding({ onStartPractice }) {
       </Card>
     </div>
   );
+
+  return createPortal(overlay, document.body);
 }
