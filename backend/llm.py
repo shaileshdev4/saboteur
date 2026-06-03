@@ -18,8 +18,8 @@ based on the operation tag / misconception description directly. This means
 the whole system works fine without LLM — it's narration polish, not the
 foundation.
 
-Provider: LLM.API (https://llmapi.ai/) — sponsor of the hackathon.
-Configured via env var LLM_API_KEY. Their API is OpenAI-compatible.
+Provider: any OpenAI-compatible API (e.g. Groq: https://api.groq.com/openai/v1).
+Env: LLM_API_KEY, LLM_API_BASE, LLM_API_MODEL. See backend/.env.example.
 """
 from __future__ import annotations
 

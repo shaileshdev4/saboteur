@@ -113,14 +113,19 @@ Expect `ok: true` and counts for loaded domains and misconceptions.
 
 ## Configuration
 
+Backend template: **`backend/.env.example`** (Groq + SQLite paths for Railway).
+
 | Variable | Where | Purpose |
 |----------|--------|---------|
-| `LLM_API_KEY` | Backend env | Enables LLM narration and explanations |
-| `SABOTEUR_DB_PATH` | Backend env | SQLite path (default under backend; Render uses `/var/data/...`) |
-| `VITE_API_BASE` | Frontend build | Production API URL (no trailing slash) |
+| `SABOTEUR_DB_PATH` | Railway / local backend | SQLite file path (sessions, rounds, hints) |
+| `LLM_CACHE_PATH` | Railway (optional) | Cached LLM responses JSON, same volume as DB |
+| `LLM_API_KEY` | Railway | Groq `gsk_...` — optional; enables narration + reveal copy |
+| `LLM_API_BASE` | Railway | `https://api.groq.com/openai/v1` |
+| `LLM_API_MODEL` | Railway | e.g. `llama-3.3-70b-versatile` |
+| `VITE_API_BASE` | Vercel build | Railway backend URL (no trailing slash) |
 | `VITE_API_PROXY_TARGET` | Frontend dev only | Backend URL for Vite proxy |
 
-Production frontend build: set `VITE_API_BASE` to your deployed backend URL before `npm run build`.
+**Database:** single SQLite file via `backend/persistence.py`. Tables are created on startup (`init_db`). Use a Railway **Volume** at `/data` and set `SABOTEUR_DB_PATH=/data/saboteur.sqlite3` so data survives redeploys.
 
 ---
 
@@ -150,8 +155,7 @@ Interactive docs when the server is running: http://127.0.0.1:8001/docs
 
 ## Deployment
 
-Backend: Render via `deploy/render.yaml` (persistent disk for SQLite).
+- **Backend:** Railway — repo root, `railway.toml`, env from `backend/.env.example`
+- **Frontend:** Vercel — Root Directory `frontend`, `VITE_API_BASE` → Railway URL
 
-Frontend: Vercel with **Root Directory = `frontend`** and `frontend/vercel.json`.
-
-Step-by-step: see [deploy/README.md](deploy/README.md).
+Details: [deploy/README.md](deploy/README.md)

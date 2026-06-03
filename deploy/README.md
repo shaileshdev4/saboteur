@@ -1,33 +1,94 @@
 # Deployment
 
-The app runs as two services: **backend** on Render (Python + SQLite on a persistent disk) and **frontend** on Vercel (static Vite build).
+| Service | Platform | Root / config |
+|---------|----------|----------------|
+| Backend (FastAPI) | **Railway** | Repo root + `railway.toml` |
+| Frontend (Vite) | **Vercel** | Root Directory = `frontend`, `frontend/vercel.json` |
 
-## Backend (Render)
+Do **not** deploy the frontend on Railway as FastAPI — delete any extra Railway “frontend” service.
 
-1. Connect this repository on Render: **New → Blueprint** and select `deploy/render.yaml`.
-2. Set environment variable `LLM_API_KEY` if you want LLM narration and explanations.
-3. After deploy, confirm health: `curl https://<your-service>.onrender.com/health` → `{"ok":true,...}`.
+---
 
-**Render notes**
+## Backend — Railway
 
-- Free tier may sleep when idle; the first request after sleep can take ~30s.
-- `SABOTEUR_DB_PATH` points at `/var/data/saboteur.sqlite3` on the mounted disk so data survives restarts.
+### Service settings
 
-## Frontend (Vercel)
+- **Root directory:** `.` (repository root, not `backend/` alone — imports need `engine/`)
+- **Start command** (also in `railway.toml`):  
+  `uvicorn backend.main:app --host 0.0.0.0 --port $PORT`
+- **Build:** `pip install -r backend/requirements.txt`
 
-1. **Add New Project** and import the repository.
-2. **Root Directory:** `frontend` (Vite app only — backend is on Railway). Config: `frontend/vercel.json`. Do not use the FastAPI/Python preset.
-3. Environment variable:
-   - `VITE_API_BASE` = your Render backend URL (e.g. `https://saboteur-backend.onrender.com`, no trailing slash)
-4. Deploy and open the site; the client creates a session on first load.
+### Environment variables
 
-There is only one Vercel config file: **`frontend/vercel.json`**. It must live next to `package.json` because Vercel’s project root is the `frontend/` folder.
+Copy from `backend/.env.example`. Minimum for production:
 
-## Local development (both services)
+| Variable | Value |
+|----------|--------|
+| `SABOTEUR_DB_PATH` | `/data/saboteur.sqlite3` (with Volume mounted at `/data`) |
+| `LLM_CACHE_PATH` | `/data/llm_cache.json` (same volume, optional but recommended with Groq) |
+| `LLM_API_KEY` | Groq key (`gsk_...`) — optional |
+| `LLM_API_BASE` | `https://api.groq.com/openai/v1` |
+| `LLM_API_MODEL` | e.g. `llama-3.3-70b-versatile` or `llama-3.1-8b-instant` |
+
+Without `LLM_API_KEY`, the API still runs; steps use short rule-based phrases and reveal text uses the misconception library.
+
+Optional (image upload only):
+
+| Variable | Purpose |
+|----------|---------|
+| `MULTIMODAL_API_KEY` | Vision transcribe for `/image/transcribe` |
+| `MATHPIX_APP_ID` / `MATHPIX_APP_KEY` | Alternative OCR |
+
+### Database (SQLite)
+
+All persistent app data lives in one SQLite file:
+
+- **Sessions** — calibration state, display name prefs  
+- **Rounds** — ground truth for grading (never sent to the client before grade)  
+- **Hints** — tier usage per round  
+- Leaderboard / achievements read from the same DB via `backend/persistence.py`
+
+Path is controlled by **`SABOTEUR_DB_PATH`** (default: `saboteur.sqlite3` in the working directory).
+
+**On Railway without a Volume:** the file lives on the container filesystem and is **lost on redeploy**.
+
+**Recommended:** Railway → your backend service → **Volumes** → mount e.g. `/data`, then set:
+
+```
+SABOTEUR_DB_PATH=/data/saboteur.sqlite3
+LLM_CACHE_PATH=/data/llm_cache.json
+```
+
+`init_db()` runs at startup and creates tables if missing (no separate migration step).
+
+### Health check
 
 ```bash
-# Terminal 1 — from repo root
+curl https://<your-railway-app>.up.railway.app/health
+```
+
+### CORS
+
+Lock `allow_origins` in `backend/main.py` to your Vercel URL when you go public.
+
+---
+
+## Frontend — Vercel
+
+1. **Root Directory:** `frontend`
+2. **Env (build time):** `VITE_API_BASE` = Railway backend URL (no trailing slash)
+3. Config file: `frontend/vercel.json`
+
+Redeploy after changing `VITE_API_BASE`.
+
+---
+
+## Local development
+
+```bash
+# Terminal 1 — repo root
 pip install -r backend/requirements.txt
+# optional: cp backend/.env.example backend/.env and fill Groq key
 uvicorn backend.main:app --reload --host 127.0.0.1 --port 8001
 
 # Terminal 2
@@ -36,12 +97,10 @@ npm install
 npm run dev
 ```
 
-The dev server proxies `/api` to `VITE_API_PROXY_TARGET` (default `http://127.0.0.1:8001` in `frontend/.env.development`).
+Vite proxies `/api` to `http://127.0.0.1:8001` via `frontend/.env.development`.
 
-## CORS
+---
 
-`backend/main.py` currently allows all origins (`*`). For a locked-down production setup, restrict to your Vercel origin:
+## Optional: Render
 
-```python
-allow_origins=["https://your-app.vercel.app"]
-```
+`deploy/render.yaml` is an alternate backend host (persistent disk at `/var/data`). Use Railway **or** Render, not both for the same app.
