@@ -5,9 +5,9 @@ This is the multi-domain replacement for engine/sabotage.py. The original
 misconception registry); this new one routes through a Domain.
 
 Phase 1 also adds two features:
-  1. **Step propagation** — optionally propagate the corruption forward so
+  1. **Step propagation** -optionally propagate the corruption forward so
      subsequent steps reflect the error. (Real student errors propagate.)
-  2. **Hint metadata** — record which step was corrupted and the category of
+  2. **Hint metadata** -record which step was corrupted and the category of
      the misconception, so the hint system can give graduated help without
      revealing the answer.
 """
@@ -74,8 +74,8 @@ def sabotage_domain(domain: Domain,
         # Optional propagation: re-derive subsequent steps from the corrupted
         # state. For Phase 1 we use a SIMPLE propagation rule: any later step
         # that is a TRANSPOSE/DIVIDE/SIMPLIFY of an equation gets the same
-        # operation applied to the corrupted state. This is heuristic — not
-        # all misconceptions propagate the same way — but it's better than
+        # operation applied to the corrupted state. This is heuristic -not
+        # all misconceptions propagate the same way -but it's better than
         # the V1 behavior (subsequent steps revert to canonical, which is
         # itself a tell).
         if options.propagate:
@@ -154,7 +154,7 @@ def _propagate_corruption(domain: Domain,
             break
 
         # If the propagated state equals the canonical state (delta happens to
-        # absorb the error), stop — we'd be showing a clean step which would
+        # absorb the error), stop -we'd be showing a clean step which would
         # be confusing.
         if domain.states_equivalent(new_expr, canon_curr):
             break

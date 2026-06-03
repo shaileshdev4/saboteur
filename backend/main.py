@@ -1,4 +1,4 @@
-"""FastAPI app v2 — multi-domain.
+"""FastAPI app v2 -multi-domain.
 
 New in v2:
   GET  /domains                         -> list registered domains
@@ -591,11 +591,17 @@ def audit_universal(request: Request, req: UniversalAuditRequest):
     """
     if not req.blob.strip():
         raise HTTPException(400, "blob is required")
-    result = auditor_module.audit_universal(
-        req.blob,
-        domain_id=req.domain_id,
-        problem_override=req.problem_override,
-    )
+    try:
+        result = auditor_module.audit_universal(
+            req.blob,
+            domain_id=req.domain_id,
+            problem_override=req.problem_override,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            500,
+            f"Audit failed: {type(exc).__name__}. Try simpler equations, one per line.",
+        ) from exc
     return UniversalAuditResult(
         problem_latex=result["problem_latex"],
         steps=[ByoaiStepResult(**s) for s in result["steps"]],
@@ -695,7 +701,7 @@ def class_dashboard(x_teacher_token: str = Header(...)):
             over_trust_count=counts.get("over_trust", 0),
             correct_catch_count=counts.get("correct_catch", 0),
         ))
-        # Aggregate misconception heatmap — unattributed.
+        # Aggregate misconception heatmap -unattributed.
         for mid, entry in state.get("per_misconception", {}).items():
             agg = misconception_agg.setdefault(
                 mid, {"seen": 0, "caught": 0,
@@ -802,7 +808,7 @@ def match_next_round(match_id: str, req: MatchStartRequest):
     # Simplest approach: store under player 1's session (a single row), and
     # allow player 2 to grade against it.
     # For simplicity and correctness, we attach the round to the match creator's
-    # session — both players will hit /match/submit (not /grade) so the session
+    # session -both players will hit /match/submit (not /grade) so the session
     # constraint is enforced at the multiplayer layer, not the grade layer.
     rid = persistence.new_round(
         match.players[0].session_id,

@@ -40,7 +40,7 @@ class SignFlipOnTranspose(Misconception):
         curr = step.expression
         delta = sp.simplify(prev.lhs - curr.lhs)
         if delta == 0:
-            # Nothing transposed on the LHS — try the RHS side.
+            # Nothing transposed on the LHS -try the RHS side.
             delta = sp.simplify(prev.rhs - curr.rhs)
             if delta == 0:
                 return step  # no actual transpose to corrupt

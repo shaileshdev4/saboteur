@@ -1,4 +1,4 @@
-"""Achievements — predicates over session CalibrationState dicts.
+"""Achievements -predicates over session CalibrationState dicts.
 
 Unlocked set is derived on each /grade; newly unlocked IDs are returned in
 GradeOut. The frontend tracks which toasts were already shown via localStorage.

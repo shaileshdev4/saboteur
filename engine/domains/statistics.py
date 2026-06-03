@@ -1,4 +1,4 @@
-"""Statistics domain — mean, median, variance, basic probability, expected value."""
+"""Statistics domain -mean, median, variance, basic probability, expected value."""
 from __future__ import annotations
 
 import random

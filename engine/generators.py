@@ -393,7 +393,7 @@ def _root_satisfies(root_eq, problem_eq, sym) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Linear fraction: (ax + b)/k = c — rational equation
+# Linear fraction: (ax + b)/k = c -rational equation
 # ---------------------------------------------------------------------------
 
 def gen_linear_fraction(difficulty: int = 2, seed: Optional[int] = None) -> Solution:

@@ -33,7 +33,9 @@
     color: var(--color-text);
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     @apply font-semibold tracking-tight text-ink-50;
   }
 
@@ -47,7 +49,8 @@
 }
 
 @layer components {
-  /* Semantic tinted panels — use tokens directly (@apply breaks on *-muted + /opacity) */
+
+  /* Semantic tinted panels -use tokens directly (@apply breaks on *-muted + /opacity) */
   .panel-hint {
     background-color: var(--color-warn-muted);
     border: 1px solid color-mix(in srgb, var(--color-warn) 45%, transparent);
@@ -125,11 +128,9 @@
 
 .action-bar-sticky {
   @apply sticky bottom-0 z-30 pt-4 pb-2 mt-2;
-  background: linear-gradient(
-    to top,
-    theme('colors.ink.900') 75%,
-    transparent
-  );
+  background: linear-gradient(to top,
+      theme('colors.ink.900') 75%,
+      transparent);
 }
 
 @keyframes step-in {
@@ -137,6 +138,7 @@
     opacity: 0;
     transform: translateY(4px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -152,9 +154,11 @@
     opacity: 0;
     transform: scale(0.85);
   }
+
   60% {
     transform: scale(1.06);
   }
+
   100% {
     opacity: 1;
     transform: scale(1);
@@ -166,9 +170,12 @@
 }
 
 @keyframes chip-pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0.8;
   }
@@ -189,16 +196,14 @@
   inset: 0;
   z-index: 0;
   opacity: 0.035;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(255, 255, 255, 0.04) 2px,
-    rgba(255, 255, 255, 0.04) 4px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.04) 2px,
+      rgba(255, 255, 255, 0.04) 4px);
 }
 
-.theme-scanlines > *:not(.onboarding-overlay) {
+.theme-scanlines>*:not(.onboarding-overlay) {
   position: relative;
   z-index: 1;
 }
@@ -210,6 +215,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+
   .step-in,
   .points-pop,
   .chip-pulse {
@@ -244,10 +250,12 @@ a:focus-visible {
   width: 8px;
   height: 8px;
 }
+
 ::-webkit-scrollbar-thumb {
   background: var(--color-line);
   border-radius: 999px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }

@@ -1,4 +1,4 @@
-"""Algebra domain — wraps existing engine code into the Domain interface.
+"""Algebra domain -wraps existing engine code into the Domain interface.
 
 This is a binding shim. All existing logic in engine/generators.py and
 engine/misconceptions/* is preserved; we just expose it through the Domain

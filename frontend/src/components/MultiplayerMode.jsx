@@ -1,13 +1,13 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Users } from 'lucide-react';
-import katex from 'katex';
-import StepCard from './StepCard.jsx';
-import Button from './ui/Button.jsx';
-import Card from './ui/Card.jsx';
-import Chip from './ui/Chip.jsx';
-import { Check, ChevronRight } from './ui/StatusIcon.jsx';
+import React, { useEffect, useRef, useState } from "react";
+import { Users } from "lucide-react";
+import katex from "katex";
+import StepCard from "./StepCard.jsx";
+import Button from "./ui/Button.jsx";
+import Card from "./ui/Card.jsx";
+import Chip from "./ui/Chip.jsx";
+import { Check, ChevronRight } from "./ui/StatusIcon.jsx";
 
-import { api, getErrorMessage } from '../api.js';
+import { api, getErrorMessage } from "../api.js";
 
 function LaTeXBlock({ tex, displayMode = false }) {
   const ref = useRef(null);
@@ -24,18 +24,18 @@ function LaTeXBlock({ tex, displayMode = false }) {
 }
 
 export default function MultiplayerMode({ sessionId }) {
-  const [view, setView] = useState('hub');     // hub | lobby | playing | finished
-  const [nickname, setNickname] = useState('');
-  const [joinCode, setJoinCode] = useState('');
+  const [view, setView] = useState("hub"); // hub | lobby | playing | finished
+  const [nickname, setNickname] = useState("");
+  const [joinCode, setJoinCode] = useState("");
   const [match, setMatch] = useState(null);
   const [round, setRound] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   // Poll the match while waiting for the other player or for them to answer.
   useEffect(() => {
     if (!match) return;
-    if (match.state === 'finished') return;
+    if (match.state === "finished") return;
     // Only poll when there's something to wait for:
     //   - lobby: waiting for player 2 to join
     //   - in_progress with no current_round_id: waiting for next round
@@ -44,11 +44,11 @@ export default function MultiplayerMode({ sessionId }) {
       try {
         const m = await api.matchGet(match.match_id);
         setMatch(m);
-        if (m.state === 'in_progress' && view === 'lobby') {
-          setView('playing');
+        if (m.state === "in_progress" && view === "lobby") {
+          setView("playing");
         }
-        if (m.state === 'finished') {
-          setView('finished');
+        if (m.state === "finished") {
+          setView("finished");
         }
       } catch {}
     }, 1500);
@@ -69,18 +69,18 @@ export default function MultiplayerMode({ sessionId }) {
     // payload. For now, we GET /session/.../round won't work for the opponent.
     // We'll display steps fetched via a dedicated multiplayer round payload.
     // For V3 simplicity, the round payload is reconstructed by parsing the
-    // truth_steps via a separate endpoint — but since that's not built, we
-    // call /match/.../next-round (idempotent — returns existing match) and
+    // truth_steps via a separate endpoint -but since that's not built, we
+    // call /match/.../next-round (idempotent -returns existing match) and
     // fetch the actual round from the backend with /round/{round_id} if it
     // existed. Workaround: re-fetch by calling next-round which is idempotent.
   }, [match]);
 
   const createMatch = async () => {
     if (!nickname.trim()) {
-      setError('Pick a nickname first.');
+      setError("Pick a nickname first.");
       return;
     }
-    setError('');
+    setError("");
     setLoading(true);
     try {
       const m = await api.matchCreate({
@@ -88,7 +88,7 @@ export default function MultiplayerMode({ sessionId }) {
         nickname: nickname.trim(),
       });
       setMatch(m);
-      setView('lobby');
+      setView("lobby");
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -98,10 +98,10 @@ export default function MultiplayerMode({ sessionId }) {
 
   const joinMatch = async () => {
     if (!nickname.trim() || !joinCode.trim()) {
-      setError('Nickname and code required.');
+      setError("Nickname and code required.");
       return;
     }
-    setError('');
+    setError("");
     setLoading(true);
     try {
       const m = await api.matchJoin({
@@ -110,7 +110,7 @@ export default function MultiplayerMode({ sessionId }) {
         join_code: joinCode.trim().toUpperCase(),
       });
       setMatch(m);
-      setView('lobby');
+      setView("lobby");
     } catch (e) {
       setError(getErrorMessage(e));
     } finally {
@@ -120,7 +120,7 @@ export default function MultiplayerMode({ sessionId }) {
 
   const startMatch = async () => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const m = await api.matchStart(match.match_id, { session_id: sessionId });
       setMatch(m);
@@ -134,9 +134,11 @@ export default function MultiplayerMode({ sessionId }) {
 
   const nextRound = async () => {
     try {
-      const m = await api.matchNextRound(match.match_id, { session_id: sessionId });
+      const m = await api.matchNextRound(match.match_id, {
+        session_id: sessionId,
+      });
       setMatch(m);
-      setView('playing');
+      setView("playing");
     } catch (e) {
       setError(getErrorMessage(e));
     }
@@ -150,7 +152,7 @@ export default function MultiplayerMode({ sessionId }) {
     );
   }
 
-  if (view === 'hub') {
+  if (view === "hub") {
     return (
       <Hub
         sessionId={sessionId}
@@ -172,18 +174,21 @@ export default function MultiplayerMode({ sessionId }) {
     <div className="layout-shell py-4 sm:py-6 space-y-5">
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
-          <p className="text-caption text-accent-soft mb-0.5">Head-to-head audit</p>
+          <p className="text-caption text-accent-soft mb-0.5">
+            Head-to-head audit
+          </p>
           <h2 className="text-xl sm:text-2xl font-semibold tracking-tight">
             Multiplayer
           </h2>
           <p className="text-sm text-ink-400 mt-1">
-            Round {match.current_round_number} / {match.total_rounds} · {match.state}
+            Round {match.current_round_number} / {match.total_rounds} ·{" "}
+            {match.state}
           </p>
         </div>
         <ScoreBoard match={match} sessionId={sessionId} />
       </header>
 
-      {match.state === 'lobby' && (
+      {match.state === "lobby" && (
         <Lobby
           match={match}
           isHost={match.players[0]?.session_id === sessionId}
@@ -192,7 +197,7 @@ export default function MultiplayerMode({ sessionId }) {
         />
       )}
 
-      {match.state === 'in_progress' && (
+      {match.state === "in_progress" && (
         <PlayingView
           match={match}
           sessionId={sessionId}
@@ -200,10 +205,15 @@ export default function MultiplayerMode({ sessionId }) {
         />
       )}
 
-      {match.state === 'finished' && (
-        <FinishedView match={match} sessionId={sessionId} onPlayAgain={() => {
-          setMatch(null); setView('hub');
-        }} />
+      {match.state === "finished" && (
+        <FinishedView
+          match={match}
+          sessionId={sessionId}
+          onPlayAgain={() => {
+            setMatch(null);
+            setView("hub");
+          }}
+        />
       )}
 
       {error && <p className="text-sm text-bad-foreground">{error}</p>}
@@ -211,7 +221,16 @@ export default function MultiplayerMode({ sessionId }) {
   );
 }
 
-function Hub({ nickname, setNickname, joinCode, setJoinCode, onCreate, onJoin, loading, error }) {
+function Hub({
+  nickname,
+  setNickname,
+  joinCode,
+  setJoinCode,
+  onCreate,
+  onJoin,
+  loading,
+  error,
+}) {
   return (
     <div className="layout-shell py-4 sm:py-6 space-y-5">
       <header>
@@ -219,8 +238,8 @@ function Hub({ nickname, setNickname, joinCode, setJoinCode, onCreate, onJoin, l
           Multiplayer
         </h2>
         <p className="text-sm text-ink-400 mt-1">
-          Two players race on the same round. First to correctly catch wins
-          the round. 5 rounds per match.
+          Two players race on the same round. First to correctly catch wins the
+          round. 5 rounds per match.
         </p>
       </header>
 
@@ -249,7 +268,7 @@ function Hub({ nickname, setNickname, joinCode, setJoinCode, onCreate, onJoin, l
             disabled={loading || !nickname.trim()}
             className="px-4 py-2 rounded-lg bg-accent text-white hover:opacity-90 font-semibold w-full disabled:opacity-50"
           >
-            {loading ? '…' : 'Create match'}
+            {loading ? "…" : "Create match"}
           </button>
         </div>
         <div className="rounded-2xl border border-ink-700 bg-ink-800/40 p-5">
@@ -267,7 +286,7 @@ function Hub({ nickname, setNickname, joinCode, setJoinCode, onCreate, onJoin, l
             disabled={loading || !nickname.trim() || !joinCode.trim()}
             className="px-4 py-2 rounded-lg bg-ink-700 hover:bg-ink-600 font-semibold w-full disabled:opacity-50"
           >
-            {loading ? '…' : 'Join'}
+            {loading ? "…" : "Join"}
           </button>
         </div>
       </div>
@@ -286,7 +305,7 @@ function ScoreBoard({ match, sessionId }) {
           <div
             key={p.session_id}
             className={`px-3 py-1.5 rounded-lg ${
-              isYou ? 'bg-accent/20 text-accent-soft' : 'bg-ink-800'
+              isYou ? "bg-accent/20 text-accent-soft" : "bg-ink-800"
             }`}
           >
             <span className="font-medium">{p.nickname}</span>
@@ -308,9 +327,10 @@ function Lobby({ match, isHost, onStart, loading }) {
         {match.join_code}
       </div>
       <p className="text-sm text-ink-400 mt-3">
-        Waiting for {match.players.length === 1
-          ? 'an opponent to join…'
-          : 'host to start the match…'}
+        Waiting for{" "}
+        {match.players.length === 1
+          ? "an opponent to join…"
+          : "host to start the match…"}
       </p>
       {isHost && match.players.length >= 2 && (
         <button
@@ -318,7 +338,7 @@ function Lobby({ match, isHost, onStart, loading }) {
           disabled={loading}
           className="mt-4 px-4 py-2 rounded-lg bg-accent text-white hover:opacity-90 font-semibold disabled:opacity-50"
         >
-          {loading ? '…' : 'Start match'}
+          {loading ? "…" : "Start match"}
         </button>
       )}
     </div>
@@ -330,7 +350,7 @@ function PlayingView({ match, sessionId, onNextRound }) {
   const [loadingRound, setLoadingRound] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [flaggedIndex, setFlaggedIndex] = useState(null);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const me = match.players.find((p) => p.session_id === sessionId);
   const answered = me?.answered_this_round;
 
@@ -342,7 +362,8 @@ function PlayingView({ match, sessionId, onNextRound }) {
     }
     setLoadingRound(true);
     setFlaggedIndex(null);
-    api.roundPublic(match.current_round_id, sessionId)
+    api
+      .roundPublic(match.current_round_id, sessionId)
       .then((r) => setRound(r))
       .catch((e) => setError(getErrorMessage(e)))
       .finally(() => setLoadingRound(false));
@@ -350,16 +371,16 @@ function PlayingView({ match, sessionId, onNextRound }) {
 
   const submit = async (decision) => {
     setSubmitting(true);
-    setError('');
+    setError("");
     try {
       const body = {
         session_id: sessionId,
         round_id: match.current_round_id,
         decision,
       };
-      if (decision === 'flag') {
+      if (decision === "flag") {
         if (flaggedIndex === null) {
-          setError('Tap a step to flag first.');
+          setError("Tap a step to flag first.");
           setSubmitting(false);
           return;
         }
@@ -394,7 +415,11 @@ function PlayingView({ match, sessionId, onNextRound }) {
   }
 
   if (loadingRound || !round) {
-    return <div className="text-ink-400 py-8 text-center text-sm">Loading round…</div>;
+    return (
+      <div className="text-ink-400 py-8 text-center text-sm">
+        Loading round…
+      </div>
+    );
   }
 
   return (
@@ -416,7 +441,7 @@ function PlayingView({ match, sessionId, onNextRound }) {
             key={step.index}
             step={step}
             index={step.index}
-            selectable={!answered && step.operation !== 'initial'}
+            selectable={!answered && step.operation !== "initial"}
             flaggedIndex={flaggedIndex}
             onSelect={setFlaggedIndex}
           />
@@ -432,33 +457,38 @@ function PlayingView({ match, sessionId, onNextRound }) {
         </Card>
       ) : (
         <div className="action-bar-sticky">
-            <Card variant="glass" className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-card">
-              <p className="text-xs text-ink-400">
-                {flaggedIndex === null
-                  ? 'Tap a step to flag, or trust.'
-                  : `Flagging step ${flaggedIndex}`}
-              </p>
-              <div className="flex items-center gap-2 justify-end shrink-0">
-                <Button
-                  variant="secondary"
-                  size="md"
-                  onClick={() => submit('trust')}
-                  disabled={submitting}
-                  className="btn-press"
-                >
-                  Trust
-                </Button>
-                <Button
-                  variant="primary"
-                  size="md"
-                  onClick={() => submit('flag')}
-                  disabled={submitting || flaggedIndex === null}
-                  className="btn-press"
-                >
-                  {flaggedIndex !== null ? `Flag step ${flaggedIndex}` : 'Flag step…'}
-                </Button>
-              </div>
-            </Card>
+          <Card
+            variant="glass"
+            className="p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 shadow-card"
+          >
+            <p className="text-xs text-ink-400">
+              {flaggedIndex === null
+                ? "Tap a step to flag, or trust."
+                : `Flagging step ${flaggedIndex}`}
+            </p>
+            <div className="flex items-center gap-2 justify-end shrink-0">
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={() => submit("trust")}
+                disabled={submitting}
+                className="btn-press"
+              >
+                Trust
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={() => submit("flag")}
+                disabled={submitting || flaggedIndex === null}
+                className="btn-press"
+              >
+                {flaggedIndex !== null
+                  ? `Flag step ${flaggedIndex}`
+                  : "Flag step…"}
+              </Button>
+            </div>
+          </Card>
         </div>
       )}
       {error && <p className="text-sm text-bad-foreground">{error}</p>}
@@ -469,18 +499,22 @@ function PlayingView({ match, sessionId, onNextRound }) {
 function FinishedView({ match, sessionId, onPlayAgain }) {
   const sorted = [...match.players].sort((a, b) => b.score - a.score);
   const me = match.players.find((p) => p.session_id === sessionId);
-  const won = sorted[0]?.session_id === sessionId && sorted[0]?.score > (sorted[1]?.score || -1);
+  const won =
+    sorted[0]?.session_id === sessionId &&
+    sorted[0]?.score > (sorted[1]?.score || -1);
   const tied = sorted[0]?.score === sorted[1]?.score;
 
   return (
-    <div className={`rounded-2xl border p-5 step-in text-center ${
-      won ? 'panel-good' : tied ? 'panel-warn' : 'panel-bad'
-    }`}>
+    <div
+      className={`rounded-2xl border p-5 step-in text-center ${
+        won ? "panel-good" : tied ? "panel-warn" : "panel-bad"
+      }`}
+    >
       <div className="text-2xl font-bold mb-2 text-ink-50">
-        {tied ? 'Tied!' : won ? 'You won!' : 'You lost.'}
+        {tied ? "Tied!" : won ? "You won!" : "You lost."}
       </div>
       <div className="text-sm text-ink-300">
-        Final: {sorted.map((p) => `${p.nickname} ${p.score}`).join(' · ')}
+        Final: {sorted.map((p) => `${p.nickname} ${p.score}`).join(" · ")}
       </div>
       <button
         onClick={onPlayAgain}

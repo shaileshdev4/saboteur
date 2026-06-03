@@ -6,7 +6,7 @@ The user pastes a real LLM-generated algebra solution. We:
      - Best-effort: free text that we clean and split on newlines
   2. For each consecutive pair (step_i, step_i+1), check if they are
      SymPy-equivalent as equations (or expressions).
-  3. Find the FIRST step that is not equivalent to its predecessor — this
+  3. Find the FIRST step that is not equivalent to its predecessor -this
      is where the AI broke. We also tell the user what the correct next step
      would have been (by solving the equation from the previous step).
   4. Verify the final answer against the original problem.
@@ -17,8 +17,8 @@ What we do NOT do:
   - Re-narrate the steps. We just verify.
 
 Crucial design rule: this remains "verifier decides, LLM explains." We use
-SymPy for the verdict. (An LLM may help us *clean* the input — strip markdown,
-unify variables — but never decides correctness.)
+SymPy for the verdict. (An LLM may help us *clean* the input -strip markdown,
+unify variables -but never decides correctness.)
 """
 from __future__ import annotations
 
@@ -59,17 +59,32 @@ _LATEX_REPLACEMENTS = [
 def clean_latex(s: str) -> str:
     """Convert a LaTeX-ish input to a SymPy-parseable string (best effort)."""
     s = s.strip()
+    s = s.replace("·", "*").replace("×", "*")
     for pattern, replacement in _LATEX_REPLACEMENTS:
         s = re.sub(pattern, replacement, s)
+    # f'(x) = ...  ->  y = ...  (SymPy-friendly for pasted AI calculus)
+    s = re.sub(r"f\s*'\s*\([^)]*\)\s*=", "y =", s, flags=re.IGNORECASE)
+    s = re.sub(r"df/dx\s*=", "y =", s, flags=re.IGNORECASE)
     # Implicit multiplication: "2x" -> "2*x", "3(x+1)" -> "3*(x+1)"
     s = re.sub(r"(\d)([a-zA-Z(])", r"\1*\2", s)
     s = re.sub(r"\)([a-zA-Z(\d])", r")*\1", s)
     return s.strip()
 
 
+def _trim_equation_prose(s: str) -> str:
+    """Drop prose glued to an equation, e.g. '2x+6=10 step by step'."""
+    s = s.strip()
+    m = re.match(
+        r"^([-+\d\w*/().^ ]+\s*=\s*[-+\d\w*/().^ ]+)",
+        s,
+        flags=re.IGNORECASE,
+    )
+    return m.group(1).strip() if m else s
+
+
 def parse_step(text: str) -> Optional[sp.Basic]:
     """Parse one step text into a SymPy expression or equation."""
-    cleaned = clean_latex(text)
+    cleaned = _trim_equation_prose(clean_latex(text))
     # If it has "=", it's an equation.
     if "=" in cleaned:
         sides = cleaned.split("=", 1)
@@ -80,7 +95,9 @@ def parse_step(text: str) -> Optional[sp.Basic]:
         except (sp.SympifyError, SyntaxError, TypeError):
             return None
     try:
-        return sp.sympify(cleaned)
+        expr = sp.sympify(cleaned)
+        # Single expression line (common in calculus chains): treat as y = expr
+        return sp.Eq(sp.Symbol("y"), expr)
     except (sp.SympifyError, SyntaxError, TypeError):
         return None
 
@@ -93,7 +110,7 @@ def split_free_text_into_steps(blob: str) -> list[str]:
         # Strip leading enumerators like "1.", "Step 1:", "→", etc.
         line = re.sub(r"^(step\s*\d+[:.)]?|\d+[.)]|\u2192|->)\s*", "", line,
                       flags=re.IGNORECASE).strip()
-        # Strip surrounding commentary if a line contains an "=" — keep the
+        # Strip surrounding commentary if a line contains an "=" -keep the
         # equation portion only. A line like "So x = 7" should become "x = 7".
         m = re.search(r"([-+\d\w()*/^.\\{} ]+=[-+\d\w()*/^.\\{} ]+)", line)
         if m:
@@ -166,12 +183,12 @@ def audit_solution(problem_text: str, step_texts: list[str]) -> dict:
         entry["expression_latex"] = sp.latex(curr)
         if prev is None:
             entry["is_valid"] = False
-            entry["error_message"] = ("Can't verify — the previous step "
+            entry["error_message"] = ("Can't verify -the previous step "
                                        "didn't parse.")
         elif states_equivalent(prev, curr):
             pass  # explicit OK
         elif _is_valid_root_step(prev, curr):
-            pass  # Eq(x, r) is a root of prev — also OK
+            pass  # Eq(x, r) is a root of prev -also OK
         else:
             entry["is_valid"] = False
             entry["error_message"] = ("This step doesn't follow from the "
@@ -243,7 +260,7 @@ def _build_summary(first_error: Optional[int],
     if first_error is None and final_correct is True:
         return f"All {step_count} step{'s' if step_count != 1 else ''} verified."
     if first_error is None and final_correct is None:
-        return f"All {step_count} step transitions verified — couldn't confirm the final answer automatically."
+        return f"All {step_count} step transitions verified -couldn't confirm the final answer automatically."
     if first_error is None and final_correct is False:
         return ("Every step transition checks out, but the final answer "
                 "doesn't satisfy the original problem. Suspect an earlier "

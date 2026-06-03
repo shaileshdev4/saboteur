@@ -179,7 +179,7 @@ class DifferenceOfSquaresWrongFactoring(Misconception):
     id = "diff_of_squares_wrong"
     name = "Difference of squares: wrong factoring signs"
     description = ("a^2 - b^2 = (a+b)(a-b), but the student writes "
-                   "(a-b)(a-b) — squaring instead of difference-of-squares.")
+                   "(a-b)(a-b) -squaring instead of difference-of-squares.")
     category = "sign"
     difficulty = 3
     applicable_ops = (OperationType.FACTOR,)
@@ -283,7 +283,7 @@ class DividedByVariable(Misconception):
         x = Symbol("x")
         expr = step.expression
         if isinstance(expr, sp.Equality) and isinstance(expr.lhs, sp.Mul):
-            # If lhs has multiple factors, drop one — effectively "dividing by it".
+            # If lhs has multiple factors, drop one -effectively "dividing by it".
             args = list(expr.lhs.args)
             if len(args) >= 2:
                 new_lhs = sp.Mul(*args[1:])
@@ -359,7 +359,7 @@ class SquareRootDropsNegativeBranch(Misconception):
     id = "sqrt_drops_negative_branch"
     name = "Square root drops the ± (only takes positive root)"
     description = ("Solving x^2 = k, the student writes x = √k and forgets "
-                   "the x = -√k branch — losing one of the solutions.")
+                   "the x = -√k branch -losing one of the solutions.")
     category = "sign"
     difficulty = 3
     applicable_ops = (OperationType.SQUARE_ROOT, OperationType.FINAL)
@@ -387,7 +387,7 @@ class SquareRootDropsNegativeBranch(Misconception):
                     and isinstance(other.expression, sp.Equality)):
                 if other.expression.rhs != expr.rhs:
                     # Duplicate the OTHER root's value here (so both "branches"
-                    # show the same root — drops one).
+                    # show the same root -drops one).
                     return Step(step.index,
                                 sp.Eq(expr.lhs, other.expression.rhs),
                                 step.operation,
@@ -432,7 +432,7 @@ class CrossMultiplicationWrong(Misconception):
         num, den = sp.fraction(prev.lhs)
         if den == 1:
             return step
-        # Buggy: cross-multiply but swap — lhs becomes num*rhs and rhs becomes den.
+        # Buggy: cross-multiply but swap -lhs becomes num*rhs and rhs becomes den.
         new_lhs = sp.expand(num * prev.rhs)
         new_rhs = sp.expand(den)
         return Step(step.index, sp.Eq(new_lhs, new_rhs),

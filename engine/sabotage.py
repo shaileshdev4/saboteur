@@ -13,7 +13,7 @@ Design rules:
   in the displayed solution; subsequent steps are STILL the canonical ones.
   This matches how a real solution would look if someone made one mistake
   at step k and then continued doing the *correct* operation from a wrong
-  starting point — the propagated error would appear as a chain. But for
+  starting point -the propagated error would appear as a chain. But for
   v1 we keep it simple: only one displayed step differs from canonical.
   (Phase 2 can add full propagation.)
 """
@@ -57,7 +57,7 @@ def sabotage(solution: Solution,
                 continue
 
     if not candidates:
-        # No misconception applies — fall back to clean.
+        # No misconception applies -fall back to clean.
         return SabotageRecord(
             is_clean=True,
             truth=solution,
@@ -65,7 +65,7 @@ def sabotage(solution: Solution,
         )
 
     # Shuffle and try candidates until one actually produces an inequivalent
-    # step. This is the safety net — if a misconception silently no-ops we
+    # step. This is the safety net -if a misconception silently no-ops we
     # don't want to return it as a "corrupted" round, because the player would
     # be looking for a non-existent error.
     from .verifier import states_equivalent

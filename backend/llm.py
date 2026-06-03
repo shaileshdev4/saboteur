@@ -15,7 +15,7 @@ These are explicit guardrails:
 
 If no API key is configured, both functions return graceful fallbacks
 based on the operation tag / misconception description directly. This means
-the whole system works fine without LLM — it's narration polish, not the
+the whole system works fine without LLM -it's narration polish, not the
 foundation.
 
 Provider: any OpenAI-compatible API (e.g. Groq: https://api.groq.com/openai/v1).
@@ -181,7 +181,7 @@ def _fallback_step_phrasing(operation: str, note: str) -> str:
     }
     base = mapping.get(operation, "Performing an operation")
     if note and not note.startswith("sabotage:"):
-        return f"{base} — {note}"
+        return f"{base} -{note}"
     return base
 
 

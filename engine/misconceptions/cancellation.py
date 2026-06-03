@@ -110,7 +110,7 @@ def _buggy_cancel_first_term(expr):
         terms = list(num.args)
         first = terms[0] / den
         rest = sp.Add(*terms[1:])
-        return first + rest    # the rest is NOT divided — the buggy "cancellation"
+        return first + rest    # the rest is NOT divided -the buggy "cancellation"
     return expr.replace(is_target, transform)
 
 

@@ -1,28 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, GraduationCap, Users } from 'lucide-react';
-import Button from './ui/Button.jsx';
-import Card from './ui/Card.jsx';
-import Input from './ui/Input.jsx';
-import Chip from './ui/Chip.jsx';
+import React, { useEffect, useState } from "react";
+import { ArrowLeft, GraduationCap, Users } from "lucide-react";
+import Button from "./ui/Button.jsx";
+import Card from "./ui/Card.jsx";
+import Input from "./ui/Input.jsx";
+import Chip from "./ui/Chip.jsx";
 
-import { api, getErrorMessage, ApiError } from '../api.js';
+import { api, getErrorMessage, ApiError } from "../api.js";
 
-const TEACHER_TOKEN_KEY = 'saboteur:teacher_token';
+const TEACHER_TOKEN_KEY = "saboteur:teacher_token";
 
 export default function ClassroomMode({ sessionId }) {
-  const [view, setView] = useState('hub');     // hub | student | teacher
-  const [classInfo, setClassInfo] = useState(null);   // student's current class
+  const [view, setView] = useState("hub"); // hub | student | teacher
+  const [classInfo, setClassInfo] = useState(null); // student's current class
   const [teacherToken, setTeacherToken] = useState(
-    () => localStorage.getItem(TEACHER_TOKEN_KEY) || '');
+    () => localStorage.getItem(TEACHER_TOKEN_KEY) || "",
+  );
 
   // Check whether session is already in a class.
   useEffect(() => {
     if (!sessionId) return;
-    api.classBySession(sessionId)
+    api
+      .classBySession(sessionId)
       .then((d) => {
         if (d) {
           setClassInfo(d);
-          setView('student');
+          setView("student");
         }
       })
       .catch(() => {});
@@ -31,7 +33,8 @@ export default function ClassroomMode({ sessionId }) {
   if (!sessionId) {
     return (
       <div className="layout-shell py-8 text-center text-sm text-ink-400">
-        Start a session from the Play tab (or Retry in the banner) before using Classroom mode.
+        Start a session from the Play tab (or Retry in the banner) before using
+        Classroom mode.
       </div>
     );
   }
@@ -45,28 +48,29 @@ export default function ClassroomMode({ sessionId }) {
         </p>
         <h2 className="text-xl sm:text-2xl">Teacher & student hub</h2>
         <p className="text-sm text-ink-400 mt-1">
-          Teachers see aggregate calibration. Students join with a code — no accounts.
+          Teachers see aggregate calibration. Students join with a code -no
+          accounts.
         </p>
       </header>
 
-      {view === 'hub' && (
+      {view === "hub" && (
         <HubView
-          onStudent={() => setView('student')}
-          onTeacher={() => setView('teacher')}
+          onStudent={() => setView("student")}
+          onTeacher={() => setView("teacher")}
           hasTeacherToken={!!teacherToken}
         />
       )}
 
-      {view === 'student' && (
+      {view === "student" && (
         <StudentView
           sessionId={sessionId}
           classInfo={classInfo}
           onClassChange={setClassInfo}
-          onBack={() => setView('hub')}
+          onBack={() => setView("hub")}
         />
       )}
 
-      {view === 'teacher' && (
+      {view === "teacher" && (
         <TeacherView
           teacherToken={teacherToken}
           onTokenChange={(t) => {
@@ -74,7 +78,7 @@ export default function ClassroomMode({ sessionId }) {
             if (t) localStorage.setItem(TEACHER_TOKEN_KEY, t);
             else localStorage.removeItem(TEACHER_TOKEN_KEY);
           }}
-          onBack={() => setView('hub')}
+          onBack={() => setView("hub")}
         />
       )}
     </div>
@@ -94,7 +98,8 @@ function HubView({ onStudent, onTeacher, hasTeacherToken }) {
         <Users size={20} className="text-accent-soft mb-2" aria-hidden />
         <div className="text-lg font-semibold mb-1">I'm a student</div>
         <p className="text-sm text-ink-400">
-          Join with a teacher's code. Your calibration aggregates to the class — not other students.
+          Join with a teacher's code. Your calibration aggregates to the class
+          -not other students.
         </p>
       </Card>
       <Card
@@ -104,13 +109,18 @@ function HubView({ onStudent, onTeacher, hasTeacherToken }) {
         onClick={onTeacher}
         className="text-left p-5 w-full"
       >
-        <GraduationCap size={20} className="text-accent-soft mb-2" aria-hidden />
+        <GraduationCap
+          size={20}
+          className="text-accent-soft mb-2"
+          aria-hidden
+        />
         <div className="text-lg font-semibold mb-1 flex items-center gap-2 flex-wrap">
           I'm a teacher
           {hasTeacherToken && <Chip variant="accent">saved</Chip>}
         </div>
         <p className="text-sm text-ink-400">
-          Create a class, share a join code, view class-wide misconception heatmaps.
+          Create a class, share a join code, view class-wide misconception
+          heatmaps.
         </p>
       </Card>
     </div>
@@ -118,17 +128,17 @@ function HubView({ onStudent, onTeacher, hasTeacherToken }) {
 }
 
 function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
-  const [joinCode, setJoinCode] = useState('');
-  const [nickname, setNickname] = useState('');
-  const [error, setError] = useState('');
+  const [joinCode, setJoinCode] = useState("");
+  const [nickname, setNickname] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const join = async () => {
     if (!joinCode.trim() || !nickname.trim()) {
-      setError('Join code and nickname are both required.');
+      setError("Join code and nickname are both required.");
       return;
     }
-    setError('');
+    setError("");
     setLoading(true);
     try {
       const data = await api.classJoin({
@@ -147,7 +157,12 @@ function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
   if (classInfo) {
     return (
       <section>
-        <Button variant="ghost" size="sm" onClick={onBack} className="mb-3 !px-0 inline-flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="mb-3 !px-0 inline-flex items-center gap-1"
+        >
           <ArrowLeft size={14} aria-hidden />
           Back
         </Button>
@@ -157,10 +172,12 @@ function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
           <div className="text-sm text-ink-300 mt-1">
             Join code: <span className="font-mono">{classInfo.join_code}</span>
             <span className="mx-2 text-ink-500">·</span>
-            {classInfo.member_count} member{classInfo.member_count !== 1 ? 's' : ''}
+            {classInfo.member_count} member
+            {classInfo.member_count !== 1 ? "s" : ""}
           </div>
           <p className="text-xs text-ink-500 mt-3">
-            Your calibration aggregates to the teacher. Nickname visible only in this class.
+            Your calibration aggregates to the teacher. Nickname visible only in
+            this class.
           </p>
         </Card>
       </section>
@@ -169,13 +186,20 @@ function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
 
   return (
     <section>
-      <Button variant="ghost" size="sm" onClick={onBack} className="mb-3 !px-0 inline-flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onBack}
+        className="mb-3 !px-0 inline-flex items-center gap-1"
+      >
         <ArrowLeft size={14} aria-hidden />
         Back
       </Button>
       <div className="space-y-3">
         <div>
-          <label className="text-caption block mb-1">Join code from your teacher</label>
+          <label className="text-caption block mb-1">
+            Join code from your teacher
+          </label>
           <Input
             type="text"
             value={joinCode}
@@ -185,7 +209,9 @@ function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
           />
         </div>
         <div>
-          <label className="text-caption block mb-1">Nickname (teacher view only)</label>
+          <label className="text-caption block mb-1">
+            Nickname (teacher view only)
+          </label>
           <Input
             type="text"
             value={nickname}
@@ -194,8 +220,14 @@ function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
             maxLength={32}
           />
         </div>
-        <Button variant="primary" size="md" onClick={join} disabled={loading} className="btn-press">
-          {loading ? 'Joining…' : 'Join class'}
+        <Button
+          variant="primary"
+          size="md"
+          onClick={join}
+          disabled={loading}
+          className="btn-press"
+        >
+          {loading ? "Joining…" : "Join class"}
         </Button>
         {error && <p className="text-sm text-bad-foreground">{error}</p>}
       </div>
@@ -204,11 +236,11 @@ function StudentView({ sessionId, classInfo, onClassChange, onBack }) {
 }
 
 function TeacherView({ teacherToken, onTokenChange, onBack }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState("");
   const [created, setCreated] = useState(null);
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   // Auto-load dashboard if we have a stored teacher token.
   useEffect(() => {
@@ -220,14 +252,14 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
 
   const loadDashboard = async (token) => {
     setLoading(true);
-    setError('');
+    setError("");
     try {
       setDashboard(await api.classDashboard(token));
     } catch (e) {
       if (e instanceof ApiError && e.status === 401) {
-        onTokenChange('');
+        onTokenChange("");
         setDashboard(null);
-        setError('Saved teacher token is invalid. Create a new class.');
+        setError("Saved teacher token is invalid. Create a new class.");
       } else {
         setError(getErrorMessage(e));
       }
@@ -238,11 +270,11 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
 
   const createClass = async () => {
     if (!name.trim()) {
-      setError('Class name is required.');
+      setError("Class name is required.");
       return;
     }
     setLoading(true);
-    setError('');
+    setError("");
     try {
       const data = await api.classCreate({ name: name.trim() });
       setCreated(data);
@@ -260,7 +292,7 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
         dashboard={dashboard}
         onRefresh={() => loadDashboard(teacherToken)}
         onSignOut={() => {
-          onTokenChange('');
+          onTokenChange("");
           setDashboard(null);
           setCreated(null);
         }}
@@ -272,7 +304,12 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
   if (created) {
     return (
       <section>
-        <Button variant="ghost" size="sm" onClick={onBack} className="mb-3 !px-0 inline-flex items-center gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onBack}
+          className="mb-3 !px-0 inline-flex items-center gap-1"
+        >
           <ArrowLeft size={14} aria-hidden />
           Back
         </Button>
@@ -296,7 +333,8 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
                 {created.teacher_token}
               </div>
               <p className="text-xs text-ink-500 mt-1">
-                Keep this safe. If you lose it, you can't recover this class's data.
+                Keep this safe. If you lose it, you can't recover this class's
+                data.
               </p>
             </div>
           </div>
@@ -315,7 +353,12 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
 
   return (
     <section>
-      <Button variant="ghost" size="sm" onClick={onBack} className="mb-3 !px-0 inline-flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={onBack}
+        className="mb-3 !px-0 inline-flex items-center gap-1"
+      >
         <ArrowLeft size={14} aria-hidden />
         Back
       </Button>
@@ -330,8 +373,14 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
             maxLength={80}
           />
         </div>
-        <Button variant="primary" size="md" onClick={createClass} disabled={loading} className="btn-press">
-          {loading ? 'Creating…' : 'Create class'}
+        <Button
+          variant="primary"
+          size="md"
+          onClick={createClass}
+          disabled={loading}
+          className="btn-press"
+        >
+          {loading ? "Creating…" : "Create class"}
         </Button>
         {error && <p className="text-sm text-bad-foreground">{error}</p>}
       </div>
@@ -340,8 +389,9 @@ function TeacherView({ teacherToken, onTokenChange, onBack }) {
 }
 
 function TeacherDashboard({ dashboard, onRefresh, onSignOut, loading }) {
-  const heatmap = Object.entries(dashboard.misconception_heatmap || {})
-    .sort((a, b) => b[1].seen - a[1].seen);
+  const heatmap = Object.entries(dashboard.misconception_heatmap || {}).sort(
+    (a, b) => b[1].seen - a[1].seen,
+  );
 
   return (
     <section>
@@ -353,8 +403,13 @@ function TeacherDashboard({ dashboard, onRefresh, onSignOut, loading }) {
           <h3 className="text-xl font-semibold">{dashboard.name}</h3>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" size="sm" onClick={onRefresh} disabled={loading}>
-            {loading ? 'Loading…' : 'Refresh'}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onRefresh}
+            disabled={loading}
+          >
+            {loading ? "Loading…" : "Refresh"}
           </Button>
           <Button variant="ghost" size="sm" onClick={onSignOut}>
             Sign out
@@ -365,9 +420,16 @@ function TeacherDashboard({ dashboard, onRefresh, onSignOut, loading }) {
       {/* Top stats */}
       <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5">
         <Stat label="Students" value={dashboard.member_count} />
-        <Stat label="Avg score" value={(dashboard.avg_score ?? 0).toFixed(1)}
-              suffix="/ 100" highlight />
-        <Stat label="Avg rating" value={Math.round(dashboard.avg_rating ?? 1000)} />
+        <Stat
+          label="Avg score"
+          value={(dashboard.avg_score ?? 0).toFixed(1)}
+          suffix="/ 100"
+          highlight
+        />
+        <Stat
+          label="Avg rating"
+          value={Math.round(dashboard.avg_rating ?? 1000)}
+        />
       </div>
 
       {/* Members table */}
@@ -375,11 +437,21 @@ function TeacherDashboard({ dashboard, onRefresh, onSignOut, loading }) {
         <table className="w-full text-sm">
           <thead className="bg-ink-800/80 text-ink-400">
             <tr>
-              <th className="px-2 sm:px-4 py-2 text-left font-medium">Student</th>
-              <th className="px-2 sm:px-4 py-2 text-right font-medium">Score</th>
-              <th className="px-2 sm:px-4 py-2 text-right font-medium">Rounds</th>
-              <th className="px-2 sm:px-4 py-2 text-right font-medium">Catches</th>
-              <th className="px-2 sm:px-4 py-2 text-right font-medium">Over-trust</th>
+              <th className="px-2 sm:px-4 py-2 text-left font-medium">
+                Student
+              </th>
+              <th className="px-2 sm:px-4 py-2 text-right font-medium">
+                Score
+              </th>
+              <th className="px-2 sm:px-4 py-2 text-right font-medium">
+                Rounds
+              </th>
+              <th className="px-2 sm:px-4 py-2 text-right font-medium">
+                Catches
+              </th>
+              <th className="px-2 sm:px-4 py-2 text-right font-medium">
+                Over-trust
+              </th>
             </tr>
           </thead>
           <tbody className="bg-ink-800/40">
@@ -422,18 +494,23 @@ function TeacherDashboard({ dashboard, onRefresh, onSignOut, loading }) {
               const pct = Math.round((agg.catch_rate || 0) * 100);
               const trouble = pct < 50;
               return (
-                <div key={mid} className="rounded-xl border border-ink-700 bg-ink-800/40 p-3">
+                <div
+                  key={mid}
+                  className="rounded-xl border border-ink-700 bg-ink-800/40 p-3"
+                >
                   <div className="flex items-baseline justify-between mb-1 gap-2">
                     <span className="text-sm text-ink-100 truncate">
                       {agg.name || mid}
                     </span>
-                    <span className={`text-xs font-mono ${trouble ? 'text-bad-foreground' : 'text-good-foreground'}`}>
+                    <span
+                      className={`text-xs font-mono ${trouble ? "text-bad-foreground" : "text-good-foreground"}`}
+                    >
                       {agg.caught}/{agg.seen} caught
                     </span>
                   </div>
                   <div className="h-1.5 rounded-full bg-ink-700 overflow-hidden">
                     <div
-                      className={`h-full transition-all ${trouble ? 'bg-bad' : 'bg-good'}`}
+                      className={`h-full transition-all ${trouble ? "bg-bad" : "bg-good"}`}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -442,8 +519,8 @@ function TeacherDashboard({ dashboard, onRefresh, onSignOut, loading }) {
             })}
           </div>
           <p className="text-xs text-ink-500 mt-2">
-            Misconceptions caught &lt; 50% by the class are good candidates
-            for re-teaching.
+            Misconceptions caught &lt; 50% by the class are good candidates for
+            re-teaching.
           </p>
         </div>
       )}
@@ -453,10 +530,16 @@ function TeacherDashboard({ dashboard, onRefresh, onSignOut, loading }) {
 
 function Stat({ label, value, suffix, highlight }) {
   return (
-    <div className={`rounded-2xl border px-3 sm:px-4 py-3 ${
-      highlight ? 'border-accent/40 bg-accent/10' : 'border-ink-700 bg-ink-800/40'
-    }`}>
-      <div className="text-xs uppercase tracking-wider text-ink-400">{label}</div>
+    <div
+      className={`rounded-2xl border px-3 sm:px-4 py-3 ${
+        highlight
+          ? "border-accent/40 bg-accent/10"
+          : "border-ink-700 bg-ink-800/40"
+      }`}
+    >
+      <div className="text-xs uppercase tracking-wider text-ink-400">
+        {label}
+      </div>
       <div className="text-xl sm:text-2xl font-semibold mt-1">
         {value}
         {suffix && <span className="text-sm text-ink-500 ml-1">{suffix}</span>}

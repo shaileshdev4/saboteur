@@ -3,7 +3,7 @@
 Generates triangle, circle, and rectangle problems where the student computes
 a length, area, or perimeter step by step.
 
-Equivalence here is NUMERICAL with tolerance — geometry computations end at
+Equivalence here is NUMERICAL with tolerance -geometry computations end at
 a number. We use exact arithmetic where possible (SymPy) and fall back to
 floating-point with a small epsilon.
 
@@ -263,7 +263,7 @@ class PythagSwapLegsAndHypotenuse(Misconception):
         return expr.lhs.has(sp.Pow)
 
     def apply(self, step, solution, step_index):
-        # Replace c^2 = a^2 + b^2 with c^2 = b^2 - a^2 (sign-flipped) — a
+        # Replace c^2 = a^2 + b^2 with c^2 = b^2 - a^2 (sign-flipped) -a
         # classic student error.
         expr = step.expression
         if not isinstance(expr, sp.Equality):
@@ -353,7 +353,7 @@ class RadiusVsDiameterConfusion(Misconception):
     id = "radius_vs_diameter"
     name = "Using diameter where radius is required"
     description = ("In circle formulas, the student substitutes the diameter "
-                   "(2r) instead of the radius r — doubling the radius "
+                   "(2r) instead of the radius r -doubling the radius "
                    "everywhere.")
     category = "geometry_formulas"
     difficulty = 3
@@ -391,7 +391,7 @@ class CircumferenceVsAreaSwap(Misconception):
     id = "circumference_vs_area_swap"
     name = "Confusing circumference and area formulas"
     description = ("The student uses 2πr where πr² is needed (or vice versa) "
-                   "— mixing up linear and squared dependencies on r.")
+                   "-mixing up linear and squared dependencies on r.")
     category = "geometry_formulas"
     difficulty = 3
     applicable_ops = (OperationType.SIMPLIFY,)

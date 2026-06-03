@@ -7,7 +7,7 @@ Each domain provides:
   - A set of `ProblemKind`s it can generate
   - A `generate(kind, difficulty, seed) -> Solution` function
   - A misconception library (list of Misconceptions applicable to this domain)
-  - A `verify_step_equivalence(a, b)` function — the source of truth for
+  - A `verify_step_equivalence(a, b)` function -the source of truth for
     "does step b follow from step a?" Different domains need different
     equivalence checks (algebra equations vs. geometric figures vs. calculus
     derivatives).
@@ -16,7 +16,7 @@ The Domain registers itself with the global registry; the engine and API
 look up domains by id ("algebra", "geometry", "calculus").
 
 Why an abstraction layer instead of just adding code to existing files?
-Because the project's core claim — "verifier decides, LLM explains" — needs
+Because the project's core claim -"verifier decides, LLM explains" -needs
 to hold across every domain. Pulling the verifier interface out means we
 can prove (via tests) that every domain implements it. New domains can't
 sneak in by skipping verification.

@@ -6,12 +6,12 @@ the answer.
 
 Hint tiers (each successive hint costs more, and is only available after the
 previous):
-  1. "Something's off"           — confirms the solution contains an error.
+  1. "Something's off"           -confirms the solution contains an error.
                                      Cost: 1 point.
                                      Free info: NONE (just confirms is_clean=False).
-  2. "Narrow it to a region"     — reveals which third of the steps the error is in.
+  2. "Narrow it to a region"     -reveals which third of the steps the error is in.
                                      Cost: 2 points.
-  3. "Check the technique used"  — reveals the misconception's category.
+  3. "Check the technique used"  -reveals the misconception's category.
                                      Cost: 3 points.
 
 If is_clean (no error exists), tier-1 honestly says "no error" and tier 2/3
@@ -62,7 +62,7 @@ def build_hint(tier: int, record, prior_tier: int = 0) -> HintResponse:
 
     if tier == 1:
         if record.is_clean:
-            msg = ("No error to find — this solution is clean. "
+            msg = ("No error to find -this solution is clean. "
                    "(Hint locked further; trust the work.)")
             return HintResponse(tier=1, message=msg, cost=cost,
                                 cumulative_cost=cumulative_cost,

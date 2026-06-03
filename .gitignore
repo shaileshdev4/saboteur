@@ -4,7 +4,7 @@ __pycache__/
 .pytest_cache/
 backend/.pytest_cache/
 
-# Python envs (local only — never commit)
+# Python envs (local only -never commit)
 .venv/
 backend/venv/
 backend/.venv/
@@ -15,7 +15,7 @@ saboteur-v4.zip
 backend/engine/
 [{]engine,engine/
 
-# --- Frontend (Vite / React) — monorepo: all rules live here ---
+# --- Frontend (Vite / React) -monorepo: all rules live here ---
 node_modules/
 dist/
 .vite/
@@ -33,7 +33,7 @@ yarn-error.log*
 .env.*.local
 # Committed templates: frontend/.env.example, .env.development, .env.production
 
-# Runtime DB & caches (local + Render disk — not in git)
+# Runtime DB & caches (local + Render disk -not in git)
 *.sqlite3
 *.sqlite3-journal
 *.db

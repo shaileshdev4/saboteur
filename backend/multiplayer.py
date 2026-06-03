@@ -5,9 +5,9 @@ Design:
   - When a match starts, both players see the SAME round (same problem,
     same potential sabotage). The first to submit a correct decision wins
     the round.
-  - Matches are short — 5 rounds. Score is rounds-won.
+  - Matches are short -5 rounds. Score is rounds-won.
   - State lives in memory only (no DB). If the backend restarts, matches
-    are lost. That's intentional — multiplayer state is ephemeral.
+    are lost. That's intentional -multiplayer state is ephemeral.
 
 Concurrency:
   - A single threading.Lock guards the registry. Match operations are
@@ -18,7 +18,7 @@ Concurrency:
     poll bandwidth is trivial.
 
 Why no DB:
-  - The product-defining moments — matchmaking, the race — don't benefit
+  - The product-defining moments -matchmaking, the race -don't benefit
     from persistence. If you want a leaderboard later, that's a separate
     table (V4).
 """

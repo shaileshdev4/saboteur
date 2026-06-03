@@ -6,13 +6,13 @@ the Grade. Encodes the 2x2 outcome matrix from the project doc.
 Scoring weights:
   CORRECT_CATCH  = +10  (+5 bonus if misconception id is also identified)
   CORRECT_TRUST  = +5
-  OVER_TRUST     = -10  (the dangerous failure mode — weighted heaviest)
+  OVER_TRUST     = -10  (the dangerous failure mode -weighted heaviest)
   OVER_SUSPICION = -5
   WRONG_STEP_CATCH = -2  (player suspected something, but wrong step)
 
 Phase 1 extension: if the player used hints, the cumulative hint cost is
 subtracted from the final points (but never makes a correct outcome go
-NEGATIVE — a correct catch with hints is still worth a positive number,
+NEGATIVE -a correct catch with hints is still worth a positive number,
 just less).
 """
 from __future__ import annotations
@@ -83,7 +83,7 @@ def _apply_hint_cost(base_points: int, hint_cost: int,
                      outcome: GradeOutcome) -> int:
     """Subtract hint cost. Clamp so a correct outcome stays >= 1 point.
 
-    Wrong outcomes can drop below their base — hints don't save you from a
+    Wrong outcomes can drop below their base -hints don't save you from a
     bad guess, but a correct catch with all hints used is still worth something.
     """
     raw = base_points - hint_cost

@@ -2,16 +2,27 @@
 import { env } from './config/env.js';
 import {
   ApiError,
+  configApiError,
   getErrorMessage,
   httpApiError,
+  isSessionLostError,
   networkApiError,
 } from './utils/apiErrors.js';
 
-export { getErrorMessage, ApiError };
+export { getErrorMessage, ApiError, isSessionLostError };
 
 const API_BASE = env.apiBase || (import.meta.env.DEV ? '/api' : '');
 
+function sessionStorageKey() {
+  return env.sessionStorageKey || 'saboteur_session_id';
+}
+
 export async function request(path, options = {}) {
+  if (import.meta.env.PROD && !API_BASE) {
+    throw configApiError(
+      'This build has no API URL. Set VITE_API_BASE to your Railway backend in Vercel, then redeploy.',
+    );
+  }
   const { parseJson = true, ...fetchOptions } = options;
   const headers = { ...(fetchOptions.headers || {}) };
   if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
@@ -35,7 +46,7 @@ export async function request(path, options = {}) {
     } catch {
       /* ignore */
     }
-    throw httpApiError(resp.status, body);
+    throw httpApiError(resp.status, body, { apiBase: API_BASE });
   }
 
   if (!parseJson) return resp;
@@ -157,24 +168,44 @@ export const api = {
   achievements: (sessionId) => request(`/session/${sessionId}/achievements`),
 };
 
-const SESSION_KEY = 'saboteur:session_id';
+const LEGACY_SESSION_KEY = 'saboteur:session_id';
+
+function migrateLegacySessionKey() {
+  const key = sessionStorageKey();
+  const legacy = localStorage.getItem(LEGACY_SESSION_KEY);
+  if (legacy && !localStorage.getItem(key)) {
+    localStorage.setItem(key, legacy);
+  }
+  localStorage.removeItem(LEGACY_SESSION_KEY);
+}
 
 export async function getOrCreateSession() {
-  const stored = localStorage.getItem(SESSION_KEY);
+  migrateLegacySessionKey();
+  const key = sessionStorageKey();
+  const stored = localStorage.getItem(key);
   if (stored) {
     try {
       await api.dashboard(stored);
       return stored;
     } catch (e) {
       if (e instanceof ApiError && e.kind === 'network') throw e;
-      localStorage.removeItem(SESSION_KEY);
+      if (e instanceof ApiError && e.kind === 'config') throw e;
+      localStorage.removeItem(key);
     }
   }
   const created = await api.createSession();
-  localStorage.setItem(SESSION_KEY, created.session_id);
+  localStorage.setItem(key, created.session_id);
   return created.session_id;
 }
 
+/** Drop cached session id and create a new server session. */
+export async function refreshSession() {
+  clearSession();
+  return getOrCreateSession();
+}
+
 export function clearSession() {
-  localStorage.removeItem(SESSION_KEY);
+  const key = sessionStorageKey();
+  localStorage.removeItem(key);
+  localStorage.removeItem(LEGACY_SESSION_KEY);
 }

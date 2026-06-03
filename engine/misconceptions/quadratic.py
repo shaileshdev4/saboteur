@@ -1,7 +1,7 @@
 """Quadratic-specific misconceptions.
 
 These attack factoring and the quadratic formula. The hardest student errors
-live here — the formula has 4 sub-pieces and any of them can be miscopied.
+live here -the formula has 4 sub-pieces and any of them can be miscopied.
 """
 from __future__ import annotations
 

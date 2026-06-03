@@ -22,7 +22,7 @@ class CombiningUnlikeTerms(Misconception):
     """Combine a linear and a quadratic term as if they were like terms.
 
     E.g. from `x^2 + 2x + 1 = b`, the student writes `x^2 + 3 = b`
-    (treated `2x + 1` as a sum of constants) — or `3x^2 + 1 = b`
+    (treated `2x + 1` as a sum of constants) -or `3x^2 + 1 = b`
     (treated `2x` as `2x^2`).
 
     Implementation: find a step with both x and x^2 terms. Replace the

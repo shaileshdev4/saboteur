@@ -1,8 +1,8 @@
 """The verifier.
 
 This module is the **single source of truth** for whether two algebraic
-states are equivalent. The whole project's claim — "the LLM never decides
-correctness" — rests on these functions.
+states are equivalent. The whole project's claim -"the LLM never decides
+correctness" -rests on these functions.
 
 Design rules:
 1. The verifier only ever returns True/False. It never throws on bad input;
@@ -11,7 +11,7 @@ Design rules:
    solving and comparing solution sets for equations.
 3. We deliberately allow multiple normalization passes (`simplify`, `expand`,
    `together`, `radsimp`, `nsimplify`) because SymPy's `simplify` alone is
-   not always enough — e.g. it may leave `(x+1)^2` and `x^2 + 2x + 1` as
+   not always enough -e.g. it may leave `(x+1)^2` and `x^2 + 2x + 1` as
    distinct unless `expand` is called.
 """
 from __future__ import annotations
@@ -108,7 +108,7 @@ def _solutions_equal(sol_a: Any, sol_b: Any) -> bool:
 
 
 def states_equivalent(a: Any, b: Any) -> bool:
-    """Generic equivalence — figures out whether to use expression or equation logic."""
+    """Generic equivalence -figures out whether to use expression or equation logic."""
     a_s = _safe_sympify(a)
     b_s = _safe_sympify(b)
     if a_s is None or b_s is None:
@@ -128,7 +128,7 @@ def is_well_formed(x: Any) -> bool:
     x_s = _safe_sympify(x)
     if x_s is None:
         return False
-    # Reject NaN and complex infinities — these indicate a broken transform.
+    # Reject NaN and complex infinities -these indicate a broken transform.
     if x_s.has(sp.nan) or x_s.has(sp.zoo) or x_s.has(sp.oo) or x_s.has(-sp.oo):
         return False
     return True

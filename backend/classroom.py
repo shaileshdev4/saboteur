@@ -8,21 +8,21 @@ calibration data across the class.
 Schema additions:
   classes:
     class_id        TEXT PK
-    teacher_token   TEXT       — bearer token for teacher; only the teacher
+    teacher_token   TEXT       -bearer token for teacher; only the teacher
                                   knows this. Used to view aggregate data.
-    join_code       TEXT       — short code (e.g. "TIGER-PI"); shared with
+    join_code       TEXT       -short code (e.g. "TIGER-PI"); shared with
                                   students.
-    name            TEXT       — display name
+    name            TEXT       -display name
     created_at      REAL
 
   class_members:
     class_id        TEXT
     session_id      TEXT
-    nickname        TEXT       — student-chosen name shown in teacher view
+    nickname        TEXT       -student-chosen name shown in teacher view
     joined_at       REAL
     PRIMARY KEY (class_id, session_id)
 
-We don't add a user table — sessions remain anonymous. The teacher_token is
+We don't add a user table -sessions remain anonymous. The teacher_token is
 the only "auth" primitive, and it's per-class. A student joining a class with
 a known code doesn't get the teacher token; they get the public class data
 only (just enough to confirm they joined).

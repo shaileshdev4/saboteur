@@ -1,41 +1,41 @@
-import React, { useEffect, useRef } from 'react';
-import katex from 'katex';
-import { AlertOctagon, BarChart3 } from 'lucide-react';
-import StepCard from './StepCard.jsx';
-import Button from './ui/Button.jsx';
-import Card from './ui/Card.jsx';
-import { ChevronRight, StatusIcon } from './ui/StatusIcon.jsx';
+import React, { useEffect, useRef } from "react";
+import katex from "katex";
+import { AlertOctagon, BarChart3 } from "lucide-react";
+import StepCard from "./StepCard.jsx";
+import Button from "./ui/Button.jsx";
+import Card from "./ui/Card.jsx";
+import { ChevronRight, StatusIcon } from "./ui/StatusIcon.jsx";
 
 const OUTCOME_COPY = {
   correct_trust: {
-    label: 'Correct trust',
-    color: 'good',
-    status: 'good',
-    subtitle: 'The solution was clean — good calibration.',
+    label: "Correct trust",
+    color: "good",
+    status: "good",
+    subtitle: "The solution was clean -good calibration.",
   },
   correct_catch: {
-    label: 'You caught it',
-    color: 'good',
-    status: 'good',
-    subtitle: 'You found the planted break.',
+    label: "You caught it",
+    color: "good",
+    status: "good",
+    subtitle: "You found the planted break.",
   },
   over_trust: {
-    label: 'Over-trust',
-    color: 'bad',
-    status: 'bad',
-    subtitle: 'There was an error — trusting it is the dangerous miss.',
+    label: "Over-trust",
+    color: "bad",
+    status: "bad",
+    subtitle: "There was an error -trusting it is the dangerous miss.",
   },
   over_suspicion: {
-    label: 'Over-suspicion',
-    color: 'warn',
-    status: 'warn',
-    subtitle: 'The solution was actually clean.',
+    label: "Over-suspicion",
+    color: "warn",
+    status: "warn",
+    subtitle: "The solution was actually clean.",
   },
   wrong_step_catch: {
-    label: 'Wrong step flagged',
-    color: 'warn',
-    status: 'warn',
-    subtitle: 'There was an error, but not on the step you picked.',
+    label: "Wrong step flagged",
+    color: "warn",
+    status: "warn",
+    subtitle: "There was an error, but not on the step you picked.",
   },
 };
 
@@ -44,7 +44,10 @@ function LaTeXLine({ tex }) {
   useEffect(() => {
     if (ref.current && tex) {
       try {
-        katex.render(tex, ref.current, { throwOnError: false, displayMode: false });
+        katex.render(tex, ref.current, {
+          throwOnError: false,
+          displayMode: false,
+        });
       } catch {
         ref.current.textContent = tex;
       }
@@ -57,22 +60,23 @@ export default function RevealScreen({ round, grade, onNext, onDashboard }) {
   if (!grade || !round) return null;
   const o = OUTCOME_COPY[grade.outcome] || {
     label: grade.outcome,
-    color: 'warn',
-    status: 'warn',
-    subtitle: '',
+    color: "warn",
+    status: "warn",
+    subtitle: "",
   };
   const panelMap = {
-    good: 'panel-good',
-    bad: 'panel-bad',
-    warn: 'panel-warn',
+    good: "panel-good",
+    bad: "panel-bad",
+    warn: "panel-warn",
   };
   const iconBg = {
-    good: 'bg-good-muted border-good/50',
-    bad: 'bg-bad-muted border-bad/50',
-    warn: 'bg-warn-muted border-warn/50',
+    good: "bg-good-muted border-good/50",
+    bad: "bg-bad-muted border-bad/50",
+    warn: "bg-warn-muted border-warn/50",
   };
   const signPts = grade.points >= 0 ? `+${grade.points}` : `${grade.points}`;
-  const ptsClass = grade.points >= 0 ? 'text-good-foreground' : 'text-bad-foreground';
+  const ptsClass =
+    grade.points >= 0 ? "text-good-foreground" : "text-bad-foreground";
 
   return (
     <div className="layout-shell py-4 sm:py-6 pb-6">
@@ -97,7 +101,9 @@ export default function RevealScreen({ round, grade, onNext, onDashboard }) {
           </div>
           <div className={`text-right flex-shrink-0 points-pop ${ptsClass}`}>
             <div className="text-caption">Points</div>
-            <div className="font-mono text-2xl sm:text-3xl font-bold">{signPts}</div>
+            <div className="font-mono text-2xl sm:text-3xl font-bold">
+              {signPts}
+            </div>
           </div>
         </div>
       </Card>
@@ -105,7 +111,11 @@ export default function RevealScreen({ round, grade, onNext, onDashboard }) {
       {!grade.is_clean && (
         <section className="mb-6 step-in">
           <div className="flex items-center gap-2 mb-3">
-            <AlertOctagon size={18} className="text-bad-foreground" aria-hidden />
+            <AlertOctagon
+              size={18}
+              className="text-bad-foreground"
+              aria-hidden
+            />
             <h3 className="text-sm font-semibold text-ink-100">
               Break detected at Step {grade.corrupted_step_index}
             </h3>
@@ -126,9 +136,7 @@ export default function RevealScreen({ round, grade, onNext, onDashboard }) {
               </div>
             </div>
             <div className="border-t border-line mt-4 pt-4">
-              <div className="text-caption mb-1">
-                Misconception
-              </div>
+              <div className="text-caption mb-1">Misconception</div>
               <p className="text-accent-foreground font-medium">
                 {grade.misconception_name}
               </p>
@@ -143,7 +151,8 @@ export default function RevealScreen({ round, grade, onNext, onDashboard }) {
       {grade.is_clean && (
         <Card variant="default" className="p-4 mb-6 step-in">
           <p className="text-ink-200 text-sm">
-            This round was clean — every step followed correctly from the previous.
+            This round was clean -every step followed correctly from the
+            previous.
           </p>
         </Card>
       )}
@@ -165,26 +174,29 @@ export default function RevealScreen({ round, grade, onNext, onDashboard }) {
       </section>
 
       <div className="action-bar-sticky">
-          <Card variant="glass" className="p-3 sm:p-4 flex justify-end gap-2 shadow-card">
-            <Button
-              variant="secondary"
-              size="md"
-              onClick={onDashboard}
-              className="inline-flex items-center gap-1.5 btn-press"
-            >
-              <BarChart3 size={16} aria-hidden />
-              Stats
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              onClick={onNext}
-              className="inline-flex items-center gap-1.5 btn-press"
-            >
-              Next round
-              <ChevronRight size={16} aria-hidden />
-            </Button>
-          </Card>
+        <Card
+          variant="glass"
+          className="p-3 sm:p-4 flex justify-end gap-2 shadow-card"
+        >
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={onDashboard}
+            className="inline-flex items-center gap-1.5 btn-press"
+          >
+            <BarChart3 size={16} aria-hidden />
+            Stats
+          </Button>
+          <Button
+            variant="primary"
+            size="md"
+            onClick={onNext}
+            className="inline-flex items-center gap-1.5 btn-press"
+          >
+            Next round
+            <ChevronRight size={16} aria-hidden />
+          </Button>
+        </Card>
       </div>
     </div>
   );

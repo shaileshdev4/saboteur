@@ -42,7 +42,7 @@ class OffByOneConstant(Misconception):
         "Common pattern in solving by inspection."
     )
     category = "coefficient"
-    difficulty = 4    # subtle — only off by 1
+    difficulty = 4    # subtle -only off by 1
     applicable_ops = (OperationType.SIMPLIFY, OperationType.TRANSPOSE,
                       OperationType.DIVIDE_BOTH_SIDES)
 
@@ -146,7 +146,7 @@ def _replace_first(expr, matcher, replacer, skip_pow_exponent=False):
         if state["done"]:
             return node, False
         if skip_pow_exponent and in_exponent:
-            # Don't match exponents — substituting 2 with 3 in x**2 would
+            # Don't match exponents -substituting 2 with 3 in x**2 would
             # produce x**3 which is structurally different in a way that
             # masks subtlety.
             return node, False

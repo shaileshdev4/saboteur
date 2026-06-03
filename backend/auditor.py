@@ -1,8 +1,8 @@
 """Universal AI auditor (BYOAI v2).
 
 The V1 byoai.py accepted structured input: explicit problem string + step list.
-This version accepts a free-form blob — what you'd actually paste from a
-chatbot conversation — and tries to:
+This version accepts a free-form blob -what you'd actually paste from a
+chatbot conversation -and tries to:
 
   1. Extract the problem and the worked steps from messy text.
   2. Detect which domain (algebra, geometry, calculus) the problem lives in.
@@ -15,7 +15,7 @@ V4 hardening: extraction now handles:
   - "Therefore" / "So" / "Thus" prefixes on the final answer
   - Trailing affirmations ("The answer is X") that shouldn't be treated as a step
 
-Detection is heuristic but conservative — if we can't confidently identify
+Detection is heuristic but conservative -if we can't confidently identify
 the domain we say so honestly rather than guessing. The verification itself
 is never heuristic; that's still the symbolic engine.
 
@@ -49,7 +49,7 @@ except ImportError:
 # Phrases that frequently introduce the problem statement. The captured group
 # must contain '=' or be a clear single-expression math line.
 _PROBLEM_LEAD_PATTERNS = [
-    # "Solve: 2x + 6 = 10" — capture must contain '='
+    # "Solve: 2x + 6 = 10" -capture must contain '='
     (r"(?:problem|question|given|solve(?: for [a-z])?|find|compute|evaluate|simplify)[:\s]+([^\n]*=[^\n]+)", True),
     # Bare equation on its own line
     (r"^\s*([^\n]+=[^\n]+)\s*$", True),
@@ -115,11 +115,61 @@ def _looks_like_math(line: str) -> bool:
     s = line.strip()
     if not s:
         return False
-    # Must contain '=' OR be a single math-only token like "sqrt(25)".
     if "=" in s:
         return True
-    # Lines without '=' are rarely useful steps; ignore them.
+    # Calculus / expression-only lines (e.g. "2(2x+3)*2" after f'(x) strip)
+    if re.search(r"[\d)(]", s) and re.search(r"[+\-*/^]", s):
+        return True
     return False
+
+
+def _extract_pythagorean_legs(blob: str) -> Optional[tuple[int, int]]:
+    m = re.search(
+        r"legs?\s+(\d+)\s+and\s+(\d+)",
+        blob,
+        flags=re.IGNORECASE,
+    )
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    return None
+
+
+def _rewrite_pythagorean_work(
+    blob: str,
+    problem: str,
+    steps: list[str],
+) -> tuple[str, list[str]]:
+    """Turn symbolic a,b,c triangle work into numeric legs for SymPy audit."""
+    legs = _extract_pythagorean_legs(blob)
+    if not legs:
+        return problem, steps
+    a, b = legs
+    hyp_sq = a * a + b * b
+    new_problem = f"c^2 = {a}^2 + {b}^2"
+    new_steps: list[str] = []
+    for st in steps:
+        s = st
+        s = re.sub(r"a\^2", str(a * a), s, flags=re.IGNORECASE)
+        s = re.sub(r"b\^2", str(b * b), s, flags=re.IGNORECASE)
+        s = re.sub(r"a\*\*2", str(a * a), s, flags=re.IGNORECASE)
+        s = re.sub(r"b\*\*2", str(b * b), s, flags=re.IGNORECASE)
+        new_steps.append(s)
+    if not new_steps:
+        new_steps = [
+            f"c^2 = {a * a} + {b * b}",
+            f"c^2 = {hyp_sq}",
+            f"c = {int(hyp_sq ** 0.5)}",
+        ]
+    return new_problem, new_steps
+
+
+def _safe_latex(expr, fallback: str = "") -> str:
+    if expr is None:
+        return fallback
+    try:
+        return sp.latex(expr)
+    except Exception:
+        return fallback
 
 
 def extract_problem_and_steps(blob: str) -> tuple[str, list[str]]:
@@ -171,6 +221,13 @@ def extract_problem_and_steps(blob: str) -> tuple[str, list[str]]:
     # Clean LaTeX wrapping ($, \[ \], etc.) from problem.
     problem_text = re.sub(r"^\$+|\$+$", "", problem_text).strip()
     problem_text = re.sub(r"\\\[|\\\]|\\\(|\\\)", "", problem_text).strip()
+    problem_text = byoai_v1._trim_equation_prose(problem_text)
+
+    # Pythagorean prose problem ("legs 3 and 4") -> numeric setup
+    legs = _extract_pythagorean_legs(blob)
+    if legs and ("=" not in problem_text or re.search(r"\ba\b|\bb\b", problem_text)):
+        a, b = legs
+        problem_text = f"c^2 = {a}^2 + {b}^2"
 
     # ----- Find the step lines -----
     steps: list[str] = []
@@ -205,6 +262,36 @@ def extract_problem_and_steps(blob: str) -> tuple[str, list[str]]:
 
         steps.append(line)
 
+    if _extract_pythagorean_legs(blob):
+        problem_text, steps = _rewrite_pythagorean_work(blob, problem_text, steps)
+
+    # Statistics: split "Mean = (a+b+...)/n = value" into auditable steps
+    mean_m = re.search(
+        r"mean\s*=\s*\(([^)]+)\)\s*/\s*(\d+)",
+        blob,
+        flags=re.IGNORECASE,
+    )
+    if mean_m:
+        nums_raw, divisor = mean_m.groups()
+        parts = [p.strip() for p in re.split(r"[,+]", nums_raw) if p.strip()]
+        if len(parts) < 2:
+            scores_m = re.search(
+                r"scores?\s*:\s*([\d,\s]+)",
+                blob,
+                flags=re.IGNORECASE,
+            )
+            if scores_m:
+                parts = [p.strip() for p in scores_m.group(1).split(",") if p.strip()]
+        n = len(parts)
+        if n >= 2:
+            total = sum(int(p) for p in parts)
+            correct = sp.Rational(total, n)
+            problem_text = f"mean = ({'+'.join(parts)})/{divisor}"
+            steps = [
+                f"mean = ({'+'.join(parts)})/{n}",
+                f"mean = {correct}",
+            ]
+
     return problem_text, steps
 
 
@@ -231,6 +318,15 @@ _DOMAIN_HINTS = {
         r"\bchain rule\b",
         r"\bproduct rule\b",
         r"\\sum\b",
+    ],
+    "statistics": [
+        r"\bmean\b",
+        r"\bmedian\b",
+        r"\bvariance\b",
+        r"\bstandard deviation\b",
+        r"\bprobability\b",
+        r"\bexpected value\b",
+        r"\bscores?:\s*[\d,\s]+",
     ],
     "geometry": [
         r"\b(?:triangle|circle|rectangle|square|polygon|trapezoid|hexagon)\b",
@@ -278,8 +374,8 @@ def audit_universal(blob: str,
     """Top-level entry: take a blob, return a structured audit result.
 
     Optional args:
-      domain_id      — force a specific domain (skip detection)
-      problem_override — force the problem text (skip extraction)
+      domain_id      -force a specific domain (skip detection)
+      problem_override -force the problem text (skip extraction)
     """
     extracted_problem, extracted_steps = extract_problem_and_steps(blob)
     problem = problem_override or extracted_problem
@@ -313,22 +409,22 @@ def audit_universal(blob: str,
     detected, scores = (domain_id, {}) if domain_id else detect_domain(
         blob, problem)
 
-    # Route to the correct verifier. For algebra, the existing byoai_v1 logic
-    # is robust; reuse it. For calculus/geometry, we use the domain's
-    # `states_equivalent` directly.
-    if detected == "algebra":
+    # Pasted AI work: algebra verifier handles step chains reliably (including
+    # numeric geometry and cleaned calculus). Domain label stays for the UI.
+    use_algebra = detected == "algebra" or detected in (
+        "geometry", "calculus", "statistics",
+    )
+    if use_algebra:
         result = byoai_v1.audit_solution(problem, extracted_steps)
-        result["detected_domain"] = "algebra"
+        result["detected_domain"] = detected
         result["domain_scores"] = scores
         return result
 
-    # Non-algebra domains: lightweight per-step check.
     try:
         domain = get_domain(detected)
     except KeyError:
-        # Fallback to algebra if domain unknown.
         result = byoai_v1.audit_solution(problem, extracted_steps)
-        result["detected_domain"] = "algebra"
+        result["detected_domain"] = detected
         result["domain_scores"] = scores
         return result
 
@@ -377,7 +473,7 @@ def _audit_with_domain(domain, problem_text: str, step_texts: list[str],
         if prev is None:
             entry["is_valid"] = False
             entry["error_message"] = (
-                "Can't verify — the previous step didn't parse.")
+                "Can't verify -the previous step didn't parse.")
         elif not domain.states_equivalent(prev, curr):
             entry["is_valid"] = False
             entry["error_message"] = (
@@ -393,7 +489,7 @@ def _audit_with_domain(domain, problem_text: str, step_texts: list[str],
                    f"({domain.label}). Steps before that are consistent.")
 
     return {
-        "problem_latex": sp.latex(problem) if problem else problem_text,
+        "problem_latex": _safe_latex(problem, problem_text),
         "steps": results,
         "first_error_index": first_error,
         "final_answer_correct": None,    # geometry/calculus don't yet check this

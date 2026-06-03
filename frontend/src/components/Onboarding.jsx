@@ -1,38 +1,42 @@
-import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import Button from './ui/Button.jsx';
-import Card from './ui/Card.jsx';
-import BrandMark from './ui/BrandMark.jsx';
-import { ChevronRight, OnboardingIcon } from './ui/StatusIcon.jsx';
+import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
+import Button from "./ui/Button.jsx";
+import Card from "./ui/Card.jsx";
+import BrandMark from "./ui/BrandMark.jsx";
+import { ChevronRight, OnboardingIcon } from "./ui/StatusIcon.jsx";
 
-const ONBOARDING_KEY = 'saboteur:onboarded';
+const ONBOARDING_KEY = "saboteur:onboarded";
 
 const STEPS = [
   {
-    title: 'One error — or none',
-    body: ('Each round shows an AI worked solution. It is either fully correct, '
-           + 'or exactly one step is wrong. Your job: decide which.'),
-    icon: 'target',
+    title: "One error -or none",
+    body:
+      "Each round shows an AI worked solution. It is either fully correct, " +
+      "or exactly one step is wrong. Your job: decide which.",
+    icon: "target",
   },
   {
-    title: 'Trust or flag',
-    body: ('Tap Trust if every step checks out. Tap a step, then Flag, if you '
-           + 'spot the break. Over-trust — trusting a bad solution — hurts your '
-           + 'calibration score the most.'),
-    icon: 'scale',
+    title: "Trust or flag",
+    body:
+      "Tap Trust if every step checks out. Tap a step, then Flag, if you " +
+      "spot the break. Over-trust -trusting a bad solution -hurts your " +
+      "calibration score the most.",
+    icon: "scale",
   },
   {
-    title: 'Your calibration score',
-    body: ('SymPy verifies every step; the LLM only explains after the reveal. '
-           + 'Play rounds to build your trust calibration. Algebra, geometry, and '
-           + 'calculus, and statistics track separately.'),
-    icon: 'flask',
+    title: "Your calibration score",
+    body:
+      "SymPy verifies every step; the LLM only explains after the reveal. " +
+      "Play rounds to build your trust calibration. Algebra, geometry, and " +
+      "calculus, and statistics track separately.",
+    icon: "flask",
   },
   {
-    title: 'Leaderboards & ranks',
-    body: ('Want to compare with others? Open the Ranks tab and opt in with a '
-           + 'nickname. Until you do, your stats stay private.'),
-    icon: 'trophy',
+    title: "Leaderboards & ranks",
+    body:
+      "Want to compare with others? Open the Ranks tab and opt in with a " +
+      "nickname. Until you do, your stats stay private.",
+    icon: "trophy",
   },
 ];
 
@@ -50,7 +54,9 @@ export default function Onboarding({ onStartPractice }) {
   }, []);
 
   const finish = (startPractice = false) => {
-    try { localStorage.setItem(ONBOARDING_KEY, '1'); } catch {}
+    try {
+      localStorage.setItem(ONBOARDING_KEY, "1");
+    } catch {}
     setVisible(false);
     if (startPractice && onStartPractice) onStartPractice();
   };
@@ -76,7 +82,9 @@ export default function Onboarding({ onStartPractice }) {
           <BrandMark />
           <div>
             <p className="text-caption text-accent-soft">The Saboteur</p>
-            <p className="text-xs text-ink-500">Audit lens · step {step + 1} of {STEPS.length}</p>
+            <p className="text-xs text-ink-500">
+              Audit lens · step {step + 1} of {STEPS.length}
+            </p>
           </div>
         </div>
 
@@ -93,7 +101,7 @@ export default function Onboarding({ onStartPractice }) {
             <span
               key={i}
               className={`h-1.5 rounded-full transition-all ${
-                i === step ? 'w-6 bg-accent' : 'w-1.5 bg-ink-600'
+                i === step ? "w-6 bg-accent" : "w-1.5 bg-ink-600"
               }`}
             />
           ))}

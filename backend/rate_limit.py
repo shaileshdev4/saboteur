@@ -12,7 +12,7 @@ Limits chosen with the API doc:
   /audit: 60/hour
   /image/transcribe: 30/hour
   /class, /match (create/join): 30/hour
-  Everything else: 240/hour (4/min average — plenty for normal play)
+  Everything else: 240/hour (4/min average -plenty for normal play)
 
 If SlowAPI isn't installed, we ship a no-op limiter so the app still runs.
 """

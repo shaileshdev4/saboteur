@@ -1,30 +1,30 @@
-import React, { useEffect, useState } from 'react';
-import { Lock } from 'lucide-react';
-import { api } from '../api.js';
-import Card from './ui/Card.jsx';
-import Chip from './ui/Chip.jsx';
-import { AchievementIcon } from './ui/StatusIcon.jsx';
-import { ACHIEVEMENTS_CATALOG } from '../data/achievementsCatalog.js';
+import React, { useEffect, useState } from "react";
+import { Lock } from "lucide-react";
+import { api } from "../api.js";
+import Card from "./ui/Card.jsx";
+import Chip from "./ui/Chip.jsx";
+import { AchievementIcon } from "./ui/StatusIcon.jsx";
+import { ACHIEVEMENTS_CATALOG } from "../data/achievementsCatalog.js";
 
 const TIER_STYLES = {
   bronze: {
-    ring: 'border-amber-900/40',
-    unlocked: 'border-amber-700/50 bg-amber-950/20',
-    icon: 'text-amber-200/90',
+    ring: "border-amber-900/40",
+    unlocked: "border-amber-700/50 bg-amber-950/20",
+    icon: "text-amber-200/90",
   },
   silver: {
-    ring: 'border-ink-400/35',
-    unlocked: 'border-ink-300/40 bg-ink-800/40',
-    icon: 'text-ink-100',
+    ring: "border-ink-400/35",
+    unlocked: "border-ink-300/40 bg-ink-800/40",
+    icon: "text-ink-100",
   },
   gold: {
-    ring: 'border-warn/45',
-    unlocked: 'border-warn/40 bg-warn-muted/30',
-    icon: 'text-warn-foreground',
+    ring: "border-warn/45",
+    unlocked: "border-warn/40 bg-warn-muted/30",
+    icon: "text-warn-foreground",
   },
 };
 
-const TIER_LABEL = { bronze: 'Bronze', silver: 'Silver', gold: 'Gold' };
+const TIER_LABEL = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 
 export default function Achievements({ sessionId, unlocked = [] }) {
   const [list, setList] = useState(unlocked);
@@ -33,7 +33,8 @@ export default function Achievements({ sessionId, unlocked = [] }) {
   useEffect(() => {
     if (!sessionId) return;
     setLoading(true);
-    api.achievements(sessionId)
+    api
+      .achievements(sessionId)
       .then(setList)
       .catch(() => setList([]))
       .finally(() => setLoading(false));
@@ -45,7 +46,9 @@ export default function Achievements({ sessionId, unlocked = [] }) {
     return <p className="text-ink-400 text-sm">Loading achievements…</p>;
   }
 
-  const unlockedCount = ACHIEVEMENTS_CATALOG.filter((c) => unlockedById[c.id]).length;
+  const unlockedCount = ACHIEVEMENTS_CATALOG.filter(
+    (c) => unlockedById[c.id],
+  ).length;
 
   return (
     <div className="space-y-3">
@@ -79,23 +82,23 @@ function AchievementCard({ achievement, locked }) {
         variant="default"
         aria-disabled={locked}
         className={[
-          'p-3 text-center border transition-colors duration-200',
+          "p-3 text-center border transition-colors duration-200",
           locked
             ? `opacity-75 cursor-default ${tier.ring} bg-surface/40`
             : `${tier.unlocked} shadow-sm`,
-        ].join(' ')}
+        ].join(" ")}
       >
         <div
           className={[
-            'relative w-10 h-10 mx-auto rounded-lg border grid place-items-center mb-2',
+            "relative w-10 h-10 mx-auto rounded-lg border grid place-items-center mb-2",
             locked
-              ? 'border-line/60 bg-ink-900/50'
-              : 'border-line bg-surface-elevated',
-          ].join(' ')}
+              ? "border-line/60 bg-ink-900/50"
+              : "border-line bg-surface-elevated",
+          ].join(" ")}
         >
           <AchievementIcon
             name={achievement.icon}
-            className={locked ? 'text-ink-400' : tier.icon}
+            className={locked ? "text-ink-400" : tier.icon}
           />
           {locked && (
             <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-ink-800 border border-line grid place-items-center">
@@ -106,15 +109,15 @@ function AchievementCard({ achievement, locked }) {
 
         <p
           className={[
-            'text-xs font-semibold truncate',
-            locked ? 'text-ink-400' : 'text-ink-50',
-          ].join(' ')}
+            "text-xs font-semibold truncate",
+            locked ? "text-ink-400" : "text-ink-50",
+          ].join(" ")}
         >
           {achievement.name}
         </p>
 
         <Chip
-          variant={locked ? 'muted' : 'accent'}
+          variant={locked ? "muted" : "accent"}
           className="mt-1.5 text-[9px] uppercase tracking-wide"
         >
           {TIER_LABEL[achievement.tier] || achievement.tier}
@@ -127,17 +130,17 @@ function AchievementCard({ achievement, locked }) {
         )}
       </Card>
 
-      {/* Hover tooltip — locked: how to unlock; unlocked: recap */}
+      {/* Hover tooltip - locked: how to unlock; unlocked: recap */}
       <div
         role="tooltip"
         className={[
-          'pointer-events-none absolute z-20 left-1/2 -translate-x-1/2 bottom-[calc(100%+6px)]',
-          'w-[min(13rem,calc(100vw-2rem))] px-3 py-2.5 rounded-xl',
-          'bg-ink-800/95 border border-line-subtle shadow-xl backdrop-blur-sm',
-          'text-left opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100',
-          'group-focus-within:opacity-100 group-focus-within:scale-100',
-          'transition-all duration-150',
-        ].join(' ')}
+          "pointer-events-none absolute z-20 left-1/2 -translate-x-1/2 bottom-[calc(100%+6px)]",
+          "w-[min(13rem,calc(100vw-2rem))] px-3 py-2.5 rounded-xl",
+          "bg-ink-800/95 border border-line-subtle shadow-xl backdrop-blur-sm",
+          "text-left opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100",
+          "group-focus-within:opacity-100 group-focus-within:scale-100",
+          "transition-all duration-150",
+        ].join(" ")}
       >
         <p className="text-xs font-semibold text-ink-50 leading-tight">
           {achievement.name}
@@ -169,7 +172,11 @@ export function RecentUnlocks({ achievements }) {
       <h3 className="text-caption mb-3">Recent unlocks</h3>
       <div className="flex flex-wrap gap-2">
         {recent.map((a) => (
-          <Card key={a.id} variant="default" className="px-3 py-2 flex items-center gap-2 border-warn/30">
+          <Card
+            key={a.id}
+            variant="default"
+            className="px-3 py-2 flex items-center gap-2 border-warn/30"
+          >
             <AchievementIcon name={a.icon} className="text-warn-foreground" />
             <span className="text-sm font-medium">{a.name}</span>
           </Card>

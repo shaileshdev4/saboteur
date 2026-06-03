@@ -1,6 +1,6 @@
 """Core domain types for The Saboteur engine.
 
-These types are deliberately simple dataclasses with no SymPy logic — the
+These types are deliberately simple dataclasses with no SymPy logic -the
 engine code operates on these, and SymPy lives in `verifier.py` and the
 generators / misconception transforms.
 """

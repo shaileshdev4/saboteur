@@ -1,5 +1,12 @@
 import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
-import { api, getOrCreateSession, clearSession, getErrorMessage } from './api.js';
+import {
+  api,
+  getOrCreateSession,
+  clearSession,
+  refreshSession,
+  getErrorMessage,
+  isSessionLostError,
+} from './api.js';
 import PlayScreen from './components/PlayScreen.jsx';
 import RevealScreen from './components/RevealScreen.jsx';
 import UniversalAuditor from './components/UniversalAuditor.jsx';
@@ -67,7 +74,7 @@ export default function App() {
     } catch (e) {
       setSessionId(null);
       setDomains([]);
-      setBannerError(getErrorMessage(e, { context: 'session' }));
+      setBannerError(getErrorMessage(e));
     } finally {
       setBootstrapped(true);
       setBootRetrying(false);
@@ -86,17 +93,32 @@ export default function App() {
     setGrade(null);
   };
 
-  const fetchRound = async () => {
-    if (!sessionId) return;
+  const fetchRound = async (sid = sessionId) => {
+    if (!sid) return;
     try {
       setLoadingRound(true);
       setBannerError('');
       setGrade(null);
       setPhase('play');
-      const r = await api.newRound(sessionId, { domainId: activeDomain });
+      const r = await api.newRound(sid, { domainId: activeDomain });
       setRound(r);
       setRoundNumber((n) => n + 1);
     } catch (e) {
+      if (isSessionLostError(e)) {
+        try {
+          const newSid = await refreshSession();
+          setSessionId(newSid);
+          const r = await api.newRound(newSid, { domainId: activeDomain });
+          setRound(r);
+          setRoundNumber((n) => n + 1);
+          setBannerError('');
+          return;
+        } catch (e2) {
+          setRound(null);
+          setBannerError(getErrorMessage(e2));
+          return;
+        }
+      }
       setRound(null);
       setBannerError(getErrorMessage(e));
     } finally {
@@ -145,13 +167,41 @@ export default function App() {
       }
       setPhase('reveal');
     } catch (e) {
-      setBannerError(getErrorMessage(e));
+      if (isSessionLostError(e)) {
+        try {
+          const newSid = await refreshSession();
+          setSessionId(newSid);
+          setBannerError('Session refreshed. Submit your answer again.');
+          return;
+        } catch (e2) {
+          setBannerError(getErrorMessage(e2));
+        }
+      } else {
+        setBannerError(getErrorMessage(e));
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleNext = () => fetchRound();
+
+  const handleFreshSession = async () => {
+    setBannerError('');
+    setRound(null);
+    setGrade(null);
+    setDashboardData(null);
+    setPhase('play');
+    try {
+      const sid = await refreshSession();
+      const doms = await api.domains();
+      setSessionId(sid);
+      setDomains(doms);
+      await fetchRound(sid);
+    } catch (e) {
+      setBannerError(getErrorMessage(e));
+    }
+  };
 
   const loadDashboard = async () => {
     if (!sessionId) return;
@@ -228,8 +278,14 @@ export default function App() {
       <ErrorBanner
         message={bannerError}
         onDismiss={() => setBannerError('')}
-        onRetry={!sessionId ? bootstrap : undefined}
-        retryLabel={bootRetrying ? 'Connecting…' : 'Retry'}
+        onRetry={!sessionId ? bootstrap : handleFreshSession}
+        retryLabel={
+          !sessionId
+            ? bootRetrying
+              ? 'Connecting…'
+              : 'Retry'
+            : 'New session'
+        }
         retrying={bootRetrying}
       />
 
