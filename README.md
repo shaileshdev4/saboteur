@@ -48,7 +48,8 @@ saboteur/
 ├── engine/          # Grading, domains, misconceptions, sabotage, hints
 ├── backend/         # FastAPI API, SQLite persistence, tests/
 ├── frontend/        # React + Vite + Tailwind UI
-├── deploy/          # Render (backend) and Vercel (frontend) configs
+├── deploy/          # Deploy notes (backend Railway/Render)
+│   └── (see frontend/vercel.json for Vercel)
 └── README.md
 ```
 
@@ -151,6 +152,6 @@ Interactive docs when the server is running: http://127.0.0.1:8001/docs
 
 Backend: Render via `deploy/render.yaml` (persistent disk for SQLite).
 
-Frontend: Vercel at **repo root** using `deploy/vercel.json` (builds `frontend/`).
+Frontend: Vercel with **Root Directory = `frontend`** and `frontend/vercel.json`.
 
 Step-by-step: see [deploy/README.md](deploy/README.md).

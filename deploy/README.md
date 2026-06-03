@@ -16,10 +16,12 @@ The app runs as two services: **backend** on Render (Python + SQLite on a persis
 ## Frontend (Vercel)
 
 1. **Add New Project** and import the repository.
-2. **Root Directory:** `.` (repository root, not `frontend/`). Vercel uses `deploy/vercel.json` for install/build/output paths.
+2. **Root Directory:** `frontend` (Vite app only — backend is on Railway). Config: `frontend/vercel.json`. Do not use the FastAPI/Python preset.
 3. Environment variable:
    - `VITE_API_BASE` = your Render backend URL (e.g. `https://saboteur-backend.onrender.com`, no trailing slash)
 4. Deploy and open the site; the client creates a session on first load.
+
+There is only one Vercel config file: **`frontend/vercel.json`**. It must live next to `package.json` because Vercel’s project root is the `frontend/` folder.
 
 ## Local development (both services)
 
